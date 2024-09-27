@@ -1,26 +1,24 @@
 package com.example.weatherwise.ui.home
 
+import WeatherResponse
 import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
+import android.graphics.drawable.GradientDrawable
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
-import android.provider.SyncStateContract.Constants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import com.example.weatherwise.LOCATION_REQUEST_CODE
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.weatherwise.Constants
+import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -28,6 +26,11 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class HomeFragment : Fragment() {
 
@@ -35,6 +38,7 @@ class HomeFragment : Fragment() {
     private lateinit var fusedLocation: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
+
 
 
     override fun onCreateView(
@@ -46,6 +50,7 @@ class HomeFragment : Fragment() {
         binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
         fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
+        applyGradientToCard()
         return root
     }
 
@@ -66,13 +71,25 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val calender = Calendar.getInstance()
+        binding.tvDate.text =  calender.time.toString()
+        val adapter = HoursAdapter()
+        val weatherObj = WeatherResponse(base = "Test")
+        weatherObj.main?.temp = 14.0
+        val list = listOf(weatherObj,weatherObj,weatherObj,weatherObj,weatherObj,weatherObj,weatherObj,weatherObj,weatherObj,weatherObj,weatherObj,)
+        binding.hoursRecyclerView.apply {
+            this.adapter = adapter
+            layoutManager = LinearLayoutManager(requireContext(),LinearLayoutManager.HORIZONTAL, false)
+        }
+        adapter.submitList(list)
+
 
     }
 
     private fun checkSelfPermission(): Boolean {
         val result = ContextCompat.checkSelfPermission(
             requireContext(),
-            android.Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
         return result
     }
@@ -96,6 +113,13 @@ class HomeFragment : Fragment() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
+//                lifecycleScope.launch(Dispatchers.IO) {
+//                    val currentWeather = RetrofitHelper.apiService.getCurrentWeather(p0.lastLocation!!.latitude,p0.lastLocation!!.longitude,Constants.API_KEY)
+//                    if (currentWeather.isSuccessful){
+//                        val result = currentWeather.body()
+//                        Log.i("TAG", "onLocationResult: ${result?.weather?.get(0)?.description?:"no results"}")
+//                    }
+//                }
 
             }
         }
@@ -120,28 +144,34 @@ class HomeFragment : Fragment() {
         ActivityCompat.requestPermissions(
             requireActivity(),
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-            LOCATION_REQUEST_CODE
+            Constants.LOCATION_REQUEST_CODE
         )
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_REQUEST_CODE) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    fun onPermissionResult(isGranted: Boolean) {
+        if (isGranted) {
+            if (isLocationEnabled()) {
                 getLocation()
             } else {
-                Toast.makeText(
-                    requireContext(),
-                    "Couldn't fetch data due to Permission",
-                    Toast.LENGTH_SHORT
-                ).show()
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
             }
+        } else {
+//            binding.latitude.text = "couldn't fetch the data"
+//            binding.longitude.text = "couldn't fetch the data"
         }
+    }
 
+    private fun applyGradientToCard() {
+        val startColor = ContextCompat.getColor(requireContext(), R.color.DarkBlue)
+        val endColor = ContextCompat.getColor(requireContext(), R.color.lightBlue)
+
+        val gradient = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(startColor, endColor)
+        )
+        gradient.cornerRadius = resources.getDimension(R.dimen.card_corner_radius)
+        binding.gradientView.background = gradient
     }
 
 
