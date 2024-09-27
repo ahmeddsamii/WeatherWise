@@ -15,4 +15,5 @@
     <string name="menu_favorite">Favorite</string>
     <string name="menu_alert">Alert</string>
     <string name="menu_settings">Settings</string>
+    <string name="weather_in_c">16 °C</string>
 </resources>
