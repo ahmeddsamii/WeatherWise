@@ -45,10 +45,19 @@ dependencies {
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.navigation.fragment.ktx
     implementation libs.androidx.navigation.ui.ktx
+    implementation libs.androidx.legacy.support.v4
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core
 
     //location
     implementation 'com.google.android.gms:play-services-location:21.3.0'
+
+
+    //retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
+
+    //cardView
+    implementation("androidx.cardview:cardview:1.0.0")
 }
