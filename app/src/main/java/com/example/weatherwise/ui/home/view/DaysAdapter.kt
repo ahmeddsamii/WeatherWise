@@ -25,6 +25,6 @@ class DaysAdapter: ListAdapter<DailyWeather, DaysAdapter.DayViewHolder>(DailyWea
         val currentDay = getItem(position)
         holder.binding.tvDay.text = currentDay.dayOfWeek
         holder.binding.maxTemp.text = currentDay.maxTemp
-        holder.binding.minTemp.text = currentDay.minTemp
+        holder.binding.minTemp.text = currentDay.minTemp+"°K"
     }
 }
