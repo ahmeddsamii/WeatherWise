@@ -26,6 +26,7 @@ import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
 import com.example.weatherwise.model.DailyWeather
+import com.example.weatherwise.model.ListElement
 import com.example.weatherwise.ui.home.viewModel.CurrentWeatherViewModelFactory
 import com.example.weatherwise.ui.home.viewModel.HomeViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -52,7 +53,6 @@ class HomeFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-       // homeViewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
         viewModelFactory = CurrentWeatherViewModelFactory(WeatherRepository.getInstance())
         homeViewModel = ViewModelProvider(this,viewModelFactory).get(HomeViewModel::class.java)
 
@@ -106,23 +106,15 @@ class HomeFragment : Fragment() {
                         false
                     )
                 }
-                val newList = hoursList.map {
-                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                        val dateTime = LocalDateTime.parse(it.dtTxt, formatter)
-                        val hours = dateTime.hour
-                        if (hours >= 12) {
-                            it.copy(dtTxt = "${if (hours > 12) hours - 12 else hours}:00 PM")
-                        } else {
-                            it.copy(dtTxt = "${if (hours == 0) 12 else hours}:00 AM")
-                        }
-                }
-                adapter.submitList(newList)
+
+                adapter.submitList(changeTimeFrom24To12(hoursList))
             }
         }
 
         homeViewModel.currentWeather.observe(viewLifecycleOwner){
-            binding.weatherTemp.text = "${it.main?.temp?.toInt()} °K"
+            binding.weatherTemp.text = "${it.main?.temp?.toInt()} °C"
             binding.weatherDescription.text = it.weather?.get(0)?.description
+            binding.ivIcon.setImageResource(getWeatherIcon(it.weather?.get(0)?.icon!!))
         }
 
         homeViewModel.dailyForecast.observe(viewLifecycleOwner) { dailyMap ->
@@ -130,7 +122,7 @@ class HomeFragment : Fragment() {
             dailyMap.forEach { (date, forecasts) ->
                 val maxTemp = forecasts.maxByOrNull { it.main.temp }?.main?.temp
                 val minTemp = forecasts.minByOrNull { it.main.temp }?.main?.temp
-                dayItemList.add(DailyWeather(date,null, maxTemp?.toInt().toString(), minTemp?.toInt().toString()))
+                dayItemList.add(DailyWeather(date,forecasts.firstOrNull()?.weather?.firstOrNull()?.icon, maxTemp?.toInt().toString(), minTemp?.toInt().toString()))
 
                 val adapter = DaysAdapter()
                 binding.daysRecyclerView.apply {
@@ -260,6 +252,48 @@ class HomeFragment : Fragment() {
         fusedLocation.removeLocationUpdates(locationCallback)
     }
 
+
+
+    private fun getWeatherIcon(icon: String): Int {
+        val iconValue: Int
+        when (icon) {
+            "01d" -> iconValue = R.drawable.clear_sky
+            "01n" -> iconValue = R.drawable.clear_sky
+            "02d" -> iconValue = R.drawable.cloudy
+            "02n" -> iconValue = R.drawable.cloudy
+            "03n" -> iconValue = R.drawable.cloudy
+            "03d" -> iconValue = R.drawable.cloudy
+            "04d" -> iconValue = R.drawable.cloudy
+            "04n" -> iconValue = R.drawable.cloudy
+            "09d" -> iconValue = R.drawable.rain
+            "09n" -> iconValue = R.drawable.rain
+            "10d" -> iconValue = R.drawable.rain
+            "10n" -> iconValue = R.drawable.rain
+            "11d" -> iconValue = R.drawable.storm
+            "11n" -> iconValue = R.drawable.storm
+            "13d" -> iconValue = R.drawable.snow
+            "13n" -> iconValue = R.drawable.snow
+            "50d" -> iconValue = R.drawable.mist
+            "50n" -> iconValue = R.drawable.mist
+            else -> iconValue = R.drawable.custom_appbar_shape
+        }
+        return iconValue
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun changeTimeFrom24To12(list:List<ListElement>):List<ListElement>{
+        val newList = list.map {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val dateTime = LocalDateTime.parse(it.dtTxt, formatter)
+            val hours = dateTime.hour
+            if (hours >= 12) {
+                it.copy(dtTxt = "${if (hours > 12) hours - 12 else hours}:00 PM")
+            } else {
+                it.copy(dtTxt = "${if (hours == 0) 12 else hours}:00 AM")
+            }
+        }
+        return newList
+    }
 }
 
 
