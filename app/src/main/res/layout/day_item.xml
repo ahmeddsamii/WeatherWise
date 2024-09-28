@@ -37,6 +37,15 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.493" />
 
+            <ImageView
+                android:id="@+id/icon"
+                android:layout_width="70dp"
+                android:layout_height="60dp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_day"
+                app:layout_constraintEnd_toStartOf="@+id/max_temp"
+                app:layout_constraintStart_toEndOf="@+id/tv_day"
+                app:layout_constraintTop_toTopOf="@+id/tv_day" />
+
             <TextView
                 android:id="@+id/min_temp"
                 android:layout_width="wrap_content"
