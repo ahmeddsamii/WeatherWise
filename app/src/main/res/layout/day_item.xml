@@ -29,13 +29,24 @@
                 android:id="@+id/max_temp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="100dp"
-                android:text="dlkjfsldgjl"
                 android:textColor="@color/white"
-                app:layout_constraintBottom_toBottomOf="@+id/tv_day"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/slash"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toEndOf="@+id/tv_day"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.493" />
+
+            <TextView
+                android:id="@+id/min_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="18dp"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/tv_day"
-                app:layout_constraintVertical_bias="1.0" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.493" />
 
             <TextView
                 android:id="@+id/tv_day"
@@ -52,25 +63,13 @@
                 android:id="@+id/slash"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="63dp"
                 android:text="/"
                 android:textColor="@color/white"
-                app:layout_constraintBottom_toBottomOf="@+id/max_temp"
-                app:layout_constraintEnd_toEndOf="@+id/min_temp"
-                app:layout_constraintTop_toTopOf="@+id/max_temp"
-                app:layout_constraintVertical_bias="0.0" />
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/min_temp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.493" />
 
-            <TextView
-                android:id="@+id/min_temp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="28dp"
-                android:text="dlkjfsldgjl"
-                android:textColor="@color/white"
-                app:layout_constraintBottom_toBottomOf="@+id/tv_day"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/tv_day"
-                app:layout_constraintVertical_bias="0.0" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
