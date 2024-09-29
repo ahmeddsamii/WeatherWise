@@ -91,10 +91,8 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val calender = Calendar.getInstance()
-        binding.tvDate.text = calender.time.toString()
-        val calendar = Calendar.getInstance()
-        binding.tvDate.text = calendar.time.toString()
-
+        val date = calender.time.toString().substring(0,10)
+        binding.tvDate.text = date
         homeViewModel.hoursList.observe(viewLifecycleOwner) { hoursList ->
             if (isAdded) {
                 val adapter = HoursAdapter()
@@ -115,6 +113,12 @@ class HomeFragment : Fragment() {
             binding.weatherTemp.text = "${it.main?.temp?.toInt()} °C"
             binding.weatherDescription.text = it.weather?.get(0)?.description
             binding.ivIcon.setImageResource(getWeatherIcon(it.weather?.get(0)?.icon!!))
+            binding.pressureValue.text = it.main?.pressure.toString()+" hpa"
+            binding.humidityValue.text = it.main?.humidity.toString()+" %"
+            binding.windValue.text = it.wind?.speed.toString()+" m/s"
+            binding.cloudValue.text = it.clouds?.all.toString()+" %"
+            binding.seaLevelValue.text = it.main?.seaLevel.toString()+" pa"
+            binding.visibleValue.text = it.visibility.toString()+" m"
         }
 
         homeViewModel.dailyForecast.observe(viewLifecycleOwner) { dailyMap ->
