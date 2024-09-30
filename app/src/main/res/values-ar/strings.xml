@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">حاله الطقس</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_favorite">المفضله</string>
+    <string name="menu_alert">التنبيهات</string>
+    <string name="menu_settings">الاعدادات</string>
+    <string name="weather_in_c">16 °C</string>
+    <string name="pressure">الضغط</string>
+    <string name="humidity">الرطوبه</string>
+    <string name="wind">الرياح</string>
+    <string name="cloud">السحب</string>
+    <string name="sea_level">مستوي سطح البحر</string>
+    <string name="visibility">الرؤيه</string>
+    <string name="arabic_radioButton_tv">العربيه</string>
+    <string name="english_radioButton_language">الانجليزيه</string>
+</resources>

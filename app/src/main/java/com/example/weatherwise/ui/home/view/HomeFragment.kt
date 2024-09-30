@@ -3,6 +3,7 @@ package com.example.weatherwise.ui.home.view
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.drawable.GradientDrawable
 import android.location.Geocoder
@@ -16,8 +17,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -40,6 +43,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.Locale
 import kotlin.math.max
 
 class HomeFragment : Fragment() {
@@ -49,12 +53,23 @@ class HomeFragment : Fragment() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
     lateinit var homeViewModel: HomeViewModel
-    lateinit var viewModelFactory:CurrentWeatherViewModelFactory
+    private lateinit var viewModelFactory:CurrentWeatherViewModelFactory
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModelFactory = CurrentWeatherViewModelFactory(WeatherRepository.getInstance())
         homeViewModel = ViewModelProvider(this,viewModelFactory).get(HomeViewModel::class.java)
+        sharedPreferences = requireActivity().getPreferences(Context.MODE_PRIVATE)
+        var language = sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "default")
+        if (language == "arabic"){
+            language = "ar"
+        }else{
+            language = "en"
+        }
+        val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language)
+        AppCompatDelegate.setApplicationLocales(appLocale)
+
 
     }
 
@@ -170,7 +185,7 @@ class HomeFragment : Fragment() {
             @RequiresApi(Build.VERSION_CODES.O)
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
-                val country = Geocoder(requireContext())
+                val country = Geocoder(requireContext(),changeLanguage())
                 val x = country.getFromLocation(p0.lastLocation?.latitude!!, p0.lastLocation?.longitude!!,1)
                 binding.tvCountryName.text = x?.get(0)!!.getAddressLine(0)
                 if (homeViewModel.hoursList.value.isNullOrEmpty()) {
@@ -297,6 +312,23 @@ class HomeFragment : Fragment() {
             }
         }
         return newList
+    }
+
+
+
+
+    private fun changeLanguage():Locale{
+        val languagePreference = sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "english")
+        val languageCode = when (languagePreference) {
+            "arabic" -> "ar"
+            else -> "en"
+        }
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        val config = resources.configuration
+        config.setLocale(locale)
+        resources.updateConfiguration(config, resources.displayMetrics)
+        return locale
     }
 }
 
