@@ -11,5 +11,7 @@ object Constants{
     const val MAP_OR_GPS_KEY = "map_or_gps"
     const val LATITUDE = "latitude"
     const val LONGITUDE = "longitude"
+    const val ENGLISH = "en"
+    const val ARABIC = "ar"
 }
 
