@@ -30,6 +30,7 @@ import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.ListElement
+import com.example.weatherwise.model.TempUnit
 import com.example.weatherwise.ui.home.viewModel.CurrentWeatherViewModelFactory
 import com.example.weatherwise.ui.home.viewModel.HomeViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -56,7 +57,9 @@ class HomeFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var comeFromMapsSharedPrefs: SharedPreferences
     private lateinit var mapsOrGpsSharedPreferences: SharedPreferences
+    private lateinit var tempSharedPreferences: SharedPreferences
     private var language:String? = null
+    lateinit var tempUnit: TempUnit
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +67,7 @@ class HomeFragment : Fragment() {
         homeViewModel = ViewModelProvider(this, viewModelFactory).get(HomeViewModel::class.java)
         sharedPreferences = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapsOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
+        tempSharedPreferences = requireActivity().getSharedPreferences(Constants.TEMP_SHARED_PREFS, Context.MODE_PRIVATE)
         fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
         language =
             sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "default")
@@ -73,6 +77,13 @@ class HomeFragment : Fragment() {
             language = Constants.ENGLISH
         }
         comeFromMapsSharedPrefs = requireActivity().getSharedPreferences(Constants.COME_FROM_MAP_PREFS, Context.MODE_PRIVATE)
+
+        tempUnit = when (tempSharedPreferences.getString(Constants.TEMP_SHARED_PREFS_KEY, "kelvin")) {
+            "celsius" -> TempUnit("metric", "°C")
+            "fahrenheit" -> TempUnit("imperial", "°F")
+            else -> TempUnit("standard", "°K")
+        }
+
 
 
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language)
@@ -134,9 +145,9 @@ class HomeFragment : Fragment() {
             binding.tvCountryName.text = addresses?.get(0)?.getAddressLine(0) ?: "Unknown Location"
 
 
-            homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY, language?:"en")
-            homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY, language?:"en")
-            homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY,language?:"en")
+            homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY,tempUnit.apiParam, language?:"en",)
+            homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY, tempUnit.apiParam,language?:"en")
+            homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY,tempUnit.apiParam,language?:"en")
         }
     }
 
@@ -163,7 +174,7 @@ class HomeFragment : Fragment() {
         }
 
         homeViewModel.currentWeather.observe(viewLifecycleOwner) {
-            binding.weatherTemp.text = "${it.main?.temp?.toInt()} °C"
+            binding.weatherTemp.text = "${it.main?.temp?.toInt()} ${tempUnit.symbol}"
             binding.weatherDescription.text = it.weather?.get(0)?.description
             binding.ivIcon.setImageResource(getWeatherIcon(it.weather?.get(0)?.icon!!))
             binding.pressureValue.text = it.main?.pressure.toString() + " hpa"
@@ -245,6 +256,7 @@ class HomeFragment : Fragment() {
                             p0.lastLocation?.latitude!!,
                             p0.lastLocation?.longitude!!,
                             Constants.API_KEY,
+                            tempUnit.apiParam,
                             language?:"en"
                         )
                     }
@@ -255,6 +267,7 @@ class HomeFragment : Fragment() {
                         p0.lastLocation?.latitude!!,
                         p0.lastLocation?.longitude!!,
                         Constants.API_KEY,
+                        tempUnit.apiParam,
                         language?:"en"
                     )
                 }
@@ -264,6 +277,7 @@ class HomeFragment : Fragment() {
                         p0.lastLocation?.latitude!!,
                         p0.lastLocation?.longitude!!,
                         Constants.API_KEY,
+                        tempUnit.apiParam,
                         language?:"en"
                     )
                 }
