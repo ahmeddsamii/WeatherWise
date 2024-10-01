@@ -64,7 +64,6 @@ class SettingsFragment : Fragment() {
         binding.usingGPS.setOnClickListener {
             mapOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"not_map").apply()
             binding.usingGPS.isChecked = true
-            restartActivity()
         }
     }
 

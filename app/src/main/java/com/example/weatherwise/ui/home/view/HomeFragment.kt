@@ -54,7 +54,8 @@ class HomeFragment : Fragment() {
     lateinit var homeViewModel: HomeViewModel
     private lateinit var viewModelFactory: CurrentWeatherViewModelFactory
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var mapSharedPreferences: SharedPreferences
+    private lateinit var comeFromMapsSharedPrefs: SharedPreferences
+    private lateinit var mapsOrGpsSharedPreferences: SharedPreferences
     private var latitudeFromMap: Float? = null
     private var longitudeFromMap: Float? = null
 
@@ -63,6 +64,7 @@ class HomeFragment : Fragment() {
         viewModelFactory = CurrentWeatherViewModelFactory(WeatherRepository.getInstance())
         homeViewModel = ViewModelProvider(this, viewModelFactory).get(HomeViewModel::class.java)
         sharedPreferences = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
+        mapsOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
         fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
         var language =
             sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "default")
@@ -71,7 +73,7 @@ class HomeFragment : Fragment() {
         } else {
             language = "en"
         }
-        mapSharedPreferences = requireActivity().getSharedPreferences(Constants.COME_FROM_MAP_PREFS, Context.MODE_PRIVATE)
+        comeFromMapsSharedPrefs = requireActivity().getSharedPreferences(Constants.COME_FROM_MAP_PREFS, Context.MODE_PRIVATE)
 
 
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language)
@@ -96,8 +98,9 @@ class HomeFragment : Fragment() {
     override fun onStart() {
         super.onStart()
 
-        val isComingFromMap = mapSharedPreferences.getBoolean(Constants.COME_FROM_MAP_KEY, false)
-        if (!isComingFromMap) {
+        val isComingFromMap = comeFromMapsSharedPrefs.getBoolean(Constants.COME_FROM_MAP_KEY, false)
+        val gpsOrMap = mapsOrGpsSharedPreferences.getString(Constants.MAP_OR_GPS_KEY, "default")
+        if (!isComingFromMap || gpsOrMap == "not_map") {
             if (checkSelfPermission()) {
                 if (isLocationEnabled()) {
                     getLocation()
@@ -110,8 +113,8 @@ class HomeFragment : Fragment() {
             }
         } else {
             if (arguments != null){
-                val latitude = mapSharedPreferences.getFloat(Constants.LATITUDE, 0.0f)
-                val longitude = mapSharedPreferences.getFloat(Constants.LONGITUDE, 0.0f)
+                val latitude = comeFromMapsSharedPrefs.getFloat(Constants.LATITUDE, 0.0f)
+                val longitude = comeFromMapsSharedPrefs.getFloat(Constants.LONGITUDE, 0.0f)
 
                 updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
 
