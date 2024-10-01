@@ -16,7 +16,7 @@ import com.example.weatherwise.databinding.FragmentSettingsBinding
 
 class SettingsFragment : Fragment() {
     private lateinit var binding: FragmentSettingsBinding
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var languageSharedPreferenceies: SharedPreferences
     private lateinit var mapOrGpsSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +29,7 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        sharedPreferences = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
+        languageSharedPreferenceies = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
 
         binding = FragmentSettingsBinding.inflate(inflater, container, false)
@@ -42,12 +42,12 @@ class SettingsFragment : Fragment() {
 
         binding.englishRB.isChecked = true
         binding.arabicRB.setOnClickListener {
-            sharedPreferences.edit().putString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "arabic").apply()
+            languageSharedPreferenceies.edit().putString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "arabic").apply()
             changeLanguage("ar")
             restartActivity()
         }
         binding.englishRB.setOnClickListener {
-            sharedPreferences.edit().putString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "english").apply()
+            languageSharedPreferenceies.edit().putString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "english").apply()
             changeLanguage("en")
             restartActivity()
             binding.englishRB.isChecked = true
@@ -69,7 +69,7 @@ class SettingsFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        val language =  sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE,"default")
+        val language =  languageSharedPreferenceies.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE,"default")
         //val gpsOrMap = mapOrGpsSharedPreferences.getString(Constants.MAP_OR_GPS_KEY, "default")
         if (language == "arabic"){
             binding.arabicRB.isChecked = true
@@ -94,7 +94,7 @@ class SettingsFragment : Fragment() {
             "en" -> "english"
             else -> "english"
         }
-        sharedPreferences.edit().putString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, languageCode).apply()
+        languageSharedPreferenceies.edit().putString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, languageCode).apply()
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language)
         AppCompatDelegate.setApplicationLocales(appLocale)
     }
