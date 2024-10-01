@@ -199,5 +199,66 @@
 
     </androidx.cardview.widget.CardView>
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cv_windSpeed"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:background="@color/teal_200"
+        android:backgroundTint="@color/teal_200"
+        app:cardCornerRadius="60dp"
+        app:layout_constraintEnd_toEndOf="@+id/cv_windSpeedRadioGroup"
+        app:layout_constraintStart_toStartOf="@+id/cv_windSpeedRadioGroup"
+        app:layout_constraintTop_toTopOf="@+id/cardView5">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/wind_speed"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:layout_editor_absoluteX="70dp"
+            tools:layout_editor_absoluteY="41dp" />
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cv_windSpeedRadioGroup"
+        android:layout_width="169dp"
+        android:layout_height="wrap_content"
+        android:backgroundTint="#2A2A2A"
+        app:cardCornerRadius="40dp"
+        app:layout_constraintEnd_toEndOf="@+id/cardView3"
+        app:layout_constraintStart_toStartOf="@+id/cardView3"
+        app:layout_constraintTop_toTopOf="@+id/cv_temp">
+
+        <RadioGroup
+            android:id="@+id/wind_radioButton"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <RadioButton
+                android:id="@+id/meterPerSecond"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/meter_per_second_rb"
+                android:checked="true"
+                android:textColor="@color/white" />
+
+            <RadioButton
+                android:id="@+id/milePerHour"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/mile_per_hour_rb"
+                android:textColor="@color/white" />
+
+        </RadioGroup>
+
+    </androidx.cardview.widget.CardView>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
