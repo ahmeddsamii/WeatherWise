@@ -18,5 +18,9 @@
     <string name="visibility">Visibility</string>
     <string name="arabic_radioButton_tv">Arabic</string>
     <string name="english_radioButton_language">English</string>
+    <string name="map">Map</string>
+    <string name="gps">GPS</string>
+    <string name="menu_home">Home</string>
+    <string name="save">Save</string>
 
 </resources>

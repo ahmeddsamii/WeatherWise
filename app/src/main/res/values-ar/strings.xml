@@ -19,4 +19,10 @@
     <string name="visibility">الرؤيه</string>
     <string name="arabic_radioButton_tv">العربيه</string>
     <string name="english_radioButton_language">الانجليزيه</string>
+
+
+    <string name="map">الخريطه</string>
+    <string name="gps">الموقع الحالي</string>
+    <string name="menu_home">الرئيسيه</string>
+    <string name="save">حفظ</string>
 </resources>
