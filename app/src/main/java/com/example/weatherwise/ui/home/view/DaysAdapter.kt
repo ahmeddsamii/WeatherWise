@@ -1,31 +1,45 @@
 package com.example.weatherwise.ui.home.view
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.DayItemBinding
 import com.example.weatherwise.diffUtils.DailyWeatherDiffUtil
 import com.example.weatherwise.model.DailyWeather
+import com.example.weatherwise.model.TempUnit
 
 class DaysAdapter: ListAdapter<DailyWeather, DaysAdapter.DayViewHolder>(DailyWeatherDiffUtil()) {
     lateinit var binding:DayItemBinding
+    private lateinit var tempSharedPreferences: SharedPreferences
+    lateinit var tempUnit: TempUnit
 
     class DayViewHolder(val binding:DayItemBinding): ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DayViewHolder {
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         binding = DayItemBinding.inflate(inflater,parent,false)
+        tempSharedPreferences = parent.context.getSharedPreferences(Constants.TEMP_SHARED_PREFS, Context.MODE_PRIVATE)
         return DayViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: DayViewHolder, position: Int) {
+
+        tempUnit = when (tempSharedPreferences.getString(Constants.TEMP_SHARED_PREFS_KEY, "kelvin")) {
+            "celsius" -> TempUnit("metric", "°C")
+            "fahrenheit" -> TempUnit("imperial", "°F")
+            else -> TempUnit("standard", "°K")
+        }
+
+
         val currentDay = getItem(position)
         holder.binding.tvDay.text = currentDay.dayOfWeek
         holder.binding.maxTemp.text = currentDay.maxTemp
-        holder.binding.minTemp.text = currentDay.minTemp+" °C"
+        holder.binding.minTemp.text = currentDay.minTemp+" ${tempUnit.symbol}"
         holder.binding.icon.setImageResource(getWeatherIcon(currentDay.imageIcon?:""))
     }
 
