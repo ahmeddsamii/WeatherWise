@@ -44,7 +44,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
-import kotlin.math.max
 
 class HomeFragment : Fragment() {
 
@@ -53,23 +52,30 @@ class HomeFragment : Fragment() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
     lateinit var homeViewModel: HomeViewModel
-    private lateinit var viewModelFactory:CurrentWeatherViewModelFactory
+    private lateinit var viewModelFactory: CurrentWeatherViewModelFactory
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var mapSharedPreferences: SharedPreferences
+    private var latitudeFromMap: Float? = null
+    private var longitudeFromMap: Float? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModelFactory = CurrentWeatherViewModelFactory(WeatherRepository.getInstance())
-        homeViewModel = ViewModelProvider(this,viewModelFactory).get(HomeViewModel::class.java)
-        sharedPreferences = requireActivity().getPreferences(Context.MODE_PRIVATE)
-        var language = sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "default")
-        if (language == "arabic"){
+        homeViewModel = ViewModelProvider(this, viewModelFactory).get(HomeViewModel::class.java)
+        sharedPreferences = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
+        fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
+        var language =
+            sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "default")
+        if (language == "arabic") {
             language = "ar"
-        }else{
+        } else {
             language = "en"
         }
+        mapSharedPreferences = requireActivity().getSharedPreferences(Constants.COME_FROM_MAP_PREFS, Context.MODE_PRIVATE)
+
+
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language)
         AppCompatDelegate.setApplicationLocales(appLocale)
-
 
     }
 
@@ -82,31 +88,59 @@ class HomeFragment : Fragment() {
         locationCallback = getLocationCallback()
         binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
+
         applyGradientToCard()
         return root
     }
 
     override fun onStart() {
         super.onStart()
-        if (checkSelfPermission()) {
-            if (isLocationEnabled()) {
-                getLocation()
+
+        val isComingFromMap = mapSharedPreferences.getBoolean(Constants.COME_FROM_MAP_KEY, false)
+        if (!isComingFromMap) {
+            if (checkSelfPermission()) {
+                if (isLocationEnabled()) {
+                    getLocation()
+                } else {
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    startActivity(intent)
+                }
             } else {
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
+                requestPermission()
             }
         } else {
-            requestPermission()
+            if (arguments != null){
+                val latitude = mapSharedPreferences.getFloat(Constants.LATITUDE, 0.0f)
+                val longitude = mapSharedPreferences.getFloat(Constants.LONGITUDE, 0.0f)
+
+                updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
+
+                //mapSharedPreferences.edit().putBoolean(Constants.COME_FROM_MAP_KEY, false).apply()
+            }
+
         }
 
+
+    }
+
+    private fun updateLocationAndFetchWeather(latitude: Double, longitude: Double) {
+        Log.d("TAG", "Updating location and fetching weather for: $latitude, $longitude")
+        lifecycleScope.launch(Dispatchers.Main) {
+            val geocoder = Geocoder(requireContext(), changeLanguage())
+            val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+            binding.tvCountryName.text = addresses?.get(0)?.getAddressLine(0) ?: "Unknown Location"
+
+            homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY)
+            homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY)
+            homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val calender = Calendar.getInstance()
-        val date = calender.time.toString().substring(0,10)
+        val date = calender.time.toString().substring(0, 10)
         binding.tvDate.text = date
         homeViewModel.hoursList.observe(viewLifecycleOwner) { hoursList ->
             if (isAdded) {
@@ -124,16 +158,16 @@ class HomeFragment : Fragment() {
             }
         }
 
-        homeViewModel.currentWeather.observe(viewLifecycleOwner){
+        homeViewModel.currentWeather.observe(viewLifecycleOwner) {
             binding.weatherTemp.text = "${it.main?.temp?.toInt()} °C"
             binding.weatherDescription.text = it.weather?.get(0)?.description
             binding.ivIcon.setImageResource(getWeatherIcon(it.weather?.get(0)?.icon!!))
-            binding.pressureValue.text = it.main?.pressure.toString()+" hpa"
-            binding.humidityValue.text = it.main?.humidity.toString()+" %"
-            binding.windValue.text = it.wind?.speed.toString()+" m/s"
-            binding.cloudValue.text = it.clouds?.all.toString()+" %"
-            binding.seaLevelValue.text = it.main?.seaLevel.toString()+" pa"
-            binding.visibleValue.text = it.visibility.toString()+" m"
+            binding.pressureValue.text = it.main?.pressure.toString() + " hpa"
+            binding.humidityValue.text = it.main?.humidity.toString() + " %"
+            binding.windValue.text = it.wind?.speed.toString() + " m/s"
+            binding.cloudValue.text = it.clouds?.all.toString() + " %"
+            binding.seaLevelValue.text = it.main?.seaLevel.toString() + " pa"
+            binding.visibleValue.text = it.visibility.toString() + " m"
         }
 
         homeViewModel.dailyForecast.observe(viewLifecycleOwner) { dailyMap ->
@@ -141,7 +175,14 @@ class HomeFragment : Fragment() {
             dailyMap.forEach { (date, forecasts) ->
                 val maxTemp = forecasts.maxByOrNull { it.main.temp }?.main?.temp
                 val minTemp = forecasts.minByOrNull { it.main.temp }?.main?.temp
-                dayItemList.add(DailyWeather(date,forecasts.firstOrNull()?.weather?.firstOrNull()?.icon, maxTemp?.toInt().toString(), minTemp?.toInt().toString()))
+                dayItemList.add(
+                    DailyWeather(
+                        date,
+                        forecasts.firstOrNull()?.weather?.firstOrNull()?.icon,
+                        maxTemp?.toInt().toString(),
+                        minTemp?.toInt().toString()
+                    )
+                )
 
                 val adapter = DaysAdapter()
                 binding.daysRecyclerView.apply {
@@ -174,7 +215,7 @@ class HomeFragment : Fragment() {
 
 
     private fun getLocationRequest(): LocationRequest {
-        locationRequest = LocationRequest.Builder(1000*120)
+        locationRequest = LocationRequest.Builder(1000 * 120)
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .build()
         return locationRequest
@@ -185,8 +226,12 @@ class HomeFragment : Fragment() {
             @RequiresApi(Build.VERSION_CODES.O)
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
-                val country = Geocoder(requireContext(),changeLanguage())
-                val x = country.getFromLocation(p0.lastLocation?.latitude!!, p0.lastLocation?.longitude!!,1)
+                val country = Geocoder(requireContext(), changeLanguage())
+                val x = country.getFromLocation(
+                    p0.lastLocation?.latitude!!,
+                    p0.lastLocation?.longitude!!,
+                    1
+                )
                 binding.tvCountryName.text = x?.get(0)!!.getAddressLine(0)
                 if (homeViewModel.hoursList.value.isNullOrEmpty()) {
                     lifecycleScope.launch {
@@ -198,7 +243,7 @@ class HomeFragment : Fragment() {
                     }
                 }
 
-                if (homeViewModel.currentWeather.value == null){
+                if (homeViewModel.currentWeather.value == null) {
                     homeViewModel.getCurrentWeather(
                         p0.lastLocation?.latitude!!,
                         p0.lastLocation?.longitude!!,
@@ -206,13 +251,13 @@ class HomeFragment : Fragment() {
                     )
                 }
 
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        homeViewModel.getForecastDataByDay(
-                            p0.lastLocation?.latitude!!,
-                            p0.lastLocation?.longitude!!,
-                            Constants.API_KEY
-                        )
-                    }
+                lifecycleScope.launch(Dispatchers.IO) {
+                    homeViewModel.getForecastDataByDay(
+                        p0.lastLocation?.latitude!!,
+                        p0.lastLocation?.longitude!!,
+                        Constants.API_KEY
+                    )
+                }
 
             }
         }
@@ -272,7 +317,6 @@ class HomeFragment : Fragment() {
     }
 
 
-
     private fun getWeatherIcon(icon: String): Int {
         val iconValue: Int
         when (icon) {
@@ -300,7 +344,7 @@ class HomeFragment : Fragment() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun changeTimeFrom24To12(list:List<ListElement>):List<ListElement>{
+    private fun changeTimeFrom24To12(list: List<ListElement>): List<ListElement> {
         val newList = list.map {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             val dateTime = LocalDateTime.parse(it.dtTxt, formatter)
@@ -315,10 +359,9 @@ class HomeFragment : Fragment() {
     }
 
 
-
-
-    private fun changeLanguage():Locale{
-        val languagePreference = sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "english")
+    private fun changeLanguage(): Locale {
+        val languagePreference =
+            sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "english")
         val languageCode = when (languagePreference) {
             "arabic" -> "ar"
             else -> "en"
@@ -329,6 +372,35 @@ class HomeFragment : Fragment() {
         config.setLocale(locale)
         resources.updateConfiguration(config, resources.displayMetrics)
         return locale
+    }
+
+
+    private fun getLocationFromMap() {
+        lifecycleScope.launch {
+            val geocoder = Geocoder(requireContext(), changeLanguage())
+            val addresses = geocoder.getFromLocation(
+                latitudeFromMap!!.toDouble(),
+                longitudeFromMap!!.toDouble(),
+                1
+            )
+            binding.tvCountryName.text = addresses?.get(0)?.getAddressLine(0) ?: "Unknown Location"
+
+            homeViewModel.getHoursList(
+                latitudeFromMap!!.toDouble(),
+                longitudeFromMap!!.toDouble(),
+                Constants.API_KEY
+            )
+            homeViewModel.getCurrentWeather(
+                latitudeFromMap!!.toDouble(),
+                longitudeFromMap!!.toDouble(),
+                Constants.API_KEY
+            )
+            homeViewModel.getForecastDataByDay(
+                latitudeFromMap!!.toDouble(),
+                longitudeFromMap!!.toDouble(),
+                Constants.API_KEY
+            )
+        }
     }
 }
 
