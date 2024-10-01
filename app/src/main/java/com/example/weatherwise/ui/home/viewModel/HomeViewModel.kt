@@ -31,9 +31,9 @@ class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
     }
 
 
-    fun getCurrentWeather(lat: Double, long: Double, apiKey: String){
+    fun getCurrentWeather(lat: Double, long: Double, apiKey: String, lang:String){
         viewModelScope.launch(Dispatchers.IO) {
-            val response = cRepo.getCurrentWeather(lat,long,apiKey)
+            val response = cRepo.getCurrentWeather(lat,long,apiKey, lang)
             if (response.isSuccessful){
                 _currentWeather.postValue(response.body())
             }

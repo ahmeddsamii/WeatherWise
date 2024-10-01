@@ -56,8 +56,7 @@ class HomeFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var comeFromMapsSharedPrefs: SharedPreferences
     private lateinit var mapsOrGpsSharedPreferences: SharedPreferences
-    private var latitudeFromMap: Float? = null
-    private var longitudeFromMap: Float? = null
+    private var language:String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,12 +65,12 @@ class HomeFragment : Fragment() {
         sharedPreferences = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapsOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
         fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
-        var language =
+        language =
             sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "default")
         if (language == "arabic") {
-            language = "ar"
+            language = Constants.ARABIC
         } else {
-            language = "en"
+            language = Constants.ENGLISH
         }
         comeFromMapsSharedPrefs = requireActivity().getSharedPreferences(Constants.COME_FROM_MAP_PREFS, Context.MODE_PRIVATE)
 
@@ -129,12 +128,14 @@ class HomeFragment : Fragment() {
     private fun updateLocationAndFetchWeather(latitude: Double, longitude: Double) {
         Log.d("TAG", "Updating location and fetching weather for: $latitude, $longitude")
         lifecycleScope.launch(Dispatchers.Main) {
-            val geocoder = Geocoder(requireContext(), changeLanguage())
+            val locale = Locale(language ?: "en")
+            val geocoder = Geocoder(requireContext(), locale)
             val addresses = geocoder.getFromLocation(latitude, longitude, 1)
             binding.tvCountryName.text = addresses?.get(0)?.getAddressLine(0) ?: "Unknown Location"
 
+
             homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY)
-            homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY)
+            homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY, language?:"en")
             homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY)
         }
     }
@@ -218,7 +219,7 @@ class HomeFragment : Fragment() {
 
 
     private fun getLocationRequest(): LocationRequest {
-        locationRequest = LocationRequest.Builder(1000 * 120)
+        locationRequest = LocationRequest.Builder(1000 * 60)
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .build()
         return locationRequest
@@ -228,8 +229,10 @@ class HomeFragment : Fragment() {
         return object : LocationCallback() {
             @RequiresApi(Build.VERSION_CODES.O)
             override fun onLocationResult(p0: LocationResult) {
+
+
                 super.onLocationResult(p0)
-                val country = Geocoder(requireContext(), changeLanguage())
+                val country = Geocoder(requireContext(), changeLanguage(requireContext(),language))
                 val x = country.getFromLocation(
                     p0.lastLocation?.latitude!!,
                     p0.lastLocation?.longitude!!,
@@ -250,7 +253,8 @@ class HomeFragment : Fragment() {
                     homeViewModel.getCurrentWeather(
                         p0.lastLocation?.latitude!!,
                         p0.lastLocation?.longitude!!,
-                        Constants.API_KEY
+                        Constants.API_KEY,
+                        language?:"en"
                     )
                 }
 
@@ -362,49 +366,24 @@ class HomeFragment : Fragment() {
     }
 
 
-    private fun changeLanguage(): Locale {
-        val languagePreference =
-            sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "english")
-        val languageCode = when (languagePreference) {
-            "arabic" -> "ar"
-            else -> "en"
+    fun changeLanguage(context: Context, languageCode: String? = null): Locale {
+        if (languageCode != null) {
+            // Set new language
+            val localeList = LocaleListCompat.forLanguageTags(languageCode)
+            AppCompatDelegate.setApplicationLocales(localeList)
         }
-        val locale = Locale(languageCode)
-        Locale.setDefault(locale)
-        val config = resources.configuration
-        config.setLocale(locale)
-        resources.updateConfiguration(config, resources.displayMetrics)
-        return locale
-    }
 
-
-    private fun getLocationFromMap() {
-        lifecycleScope.launch {
-            val geocoder = Geocoder(requireContext(), changeLanguage())
-            val addresses = geocoder.getFromLocation(
-                latitudeFromMap!!.toDouble(),
-                longitudeFromMap!!.toDouble(),
-                1
-            )
-            binding.tvCountryName.text = addresses?.get(0)?.getAddressLine(0) ?: "Unknown Location"
-
-            homeViewModel.getHoursList(
-                latitudeFromMap!!.toDouble(),
-                longitudeFromMap!!.toDouble(),
-                Constants.API_KEY
-            )
-            homeViewModel.getCurrentWeather(
-                latitudeFromMap!!.toDouble(),
-                longitudeFromMap!!.toDouble(),
-                Constants.API_KEY
-            )
-            homeViewModel.getForecastDataByDay(
-                latitudeFromMap!!.toDouble(),
-                longitudeFromMap!!.toDouble(),
-                Constants.API_KEY
-            )
+        // Get current or newly set locale
+        val currentLocaleList = AppCompatDelegate.getApplicationLocales()
+        return if (!currentLocaleList.isEmpty) {
+            currentLocaleList[0]!!
+        } else {
+            // Fallback to system locale if the app hasn't set a locale
+            context.resources.configuration.locales[0]
         }
     }
 }
+
+
 
 
