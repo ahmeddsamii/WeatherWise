@@ -18,6 +18,7 @@ class SettingsFragment : Fragment() {
     private lateinit var binding: FragmentSettingsBinding
     private lateinit var languageSharedPreferenceies: SharedPreferences
     private lateinit var mapOrGpsSharedPreferences: SharedPreferences
+    private lateinit var tempSharedPreference:SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +29,7 @@ class SettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
+        tempSharedPreference = requireActivity().getSharedPreferences(Constants.TEMP_SHARED_PREFS, Context.MODE_PRIVATE)
         languageSharedPreferenceies = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
 
@@ -51,6 +52,24 @@ class SettingsFragment : Fragment() {
             changeLanguage("en")
             restartActivity()
             binding.englishRB.isChecked = true
+        }
+
+        binding.celsius.setOnClickListener {
+            tempSharedPreference.edit().putString(Constants.TEMP_SHARED_PREFS_KEY,"celsius").apply()
+            binding.celsius.isChecked = true
+            restartActivity()
+        }
+
+        binding.fahrenheit.setOnClickListener {
+            tempSharedPreference.edit().putString(Constants.TEMP_SHARED_PREFS_KEY, "fahrenheit").apply()
+            binding.fahrenheit.isChecked = true
+            restartActivity()
+        }
+
+        binding.kelvin.setOnClickListener {
+            tempSharedPreference.edit().putString(Constants.TEMP_SHARED_PREFS_KEY, "kelvin").apply()
+            binding.kelvin.isChecked = true
+            restartActivity()
         }
 
 
@@ -81,6 +100,16 @@ class SettingsFragment : Fragment() {
 
         val gpsOrMap = mapOrGpsSharedPreferences.getString(Constants.MAP_OR_GPS_KEY,"default")
         if (gpsOrMap == "map") binding.usingMap.isChecked = true else binding.usingGPS.isChecked = true
+
+
+        val temp = tempSharedPreference.getString(Constants.TEMP_SHARED_PREFS_KEY, "kelvin")
+        if (temp == "celsius"){
+            binding.celsius.isChecked = true
+        }else if(temp == "fahrenheit"){
+            binding.fahrenheit.isChecked = true
+        }else{
+            binding.kelvin.isChecked = true
+        }
 
 
 
