@@ -25,4 +25,11 @@
     <string name="gps">الموقع الحالي</string>
     <string name="menu_home">الرئيسيه</string>
     <string name="save">حفظ</string>
+    <string name="language_settings">اللغه</string>
+
+    <string name="location_settings">الموقع</string>
+    <string name="celsius_rb">سليزيس</string>
+    <string name="temperature_settings">درجة الحراره</string>
+    <string name="fahrenheit_rb">فهرنهايت</string>
+    <string name="kelvin_rb">كيلفن</string>
 </resources>

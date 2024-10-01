@@ -22,5 +22,11 @@
     <string name="gps">GPS</string>
     <string name="menu_home">Home</string>
     <string name="save">Save</string>
+    <string name="language_settings">Language</string>
+    <string name="location_settings">Location</string>
+    <string name="celsius_rb">Celsius</string>
+    <string name="temperature_settings">Temperature</string>
+    <string name="fahrenheit_rb">Fahrenheit</string>
+    <string name="kelvin_rb">Kelvin</string>
 
 </resources>
