@@ -21,10 +21,6 @@
             android:icon ="@drawable/ic_launcher_background"
             android:title="@string/menu_settings"/>
 
-        <item
-            android:id="@+id/init_fragment"
-            android:icon ="@drawable/ic_launcher_background"
-            android:title="@string/initial_setup"/>
     </group>
 
 
