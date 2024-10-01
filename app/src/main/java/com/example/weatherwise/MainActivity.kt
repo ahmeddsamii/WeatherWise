@@ -2,6 +2,7 @@ package com.example.weatherwise
 
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import com.google.android.material.navigation.NavigationView
 import androidx.navigation.findNavController
@@ -29,15 +30,22 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.appBarMain.toolbar)
 
 
+
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(
             setOf(
-               R.id.init_fragment, R.id.nav_home, R.id.nav_favorite, R.id.nav_alert, R.id.nav_settings
+                R.id.nav_home, R.id.nav_favorite, R.id.nav_alert, R.id.nav_settings
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.mapFragment -> hideToolbar()
+                else -> showToolbar()
+            }
+        }
         navView.setupWithNavController(navController)
     }
 
@@ -83,5 +91,15 @@ class MainActivity : AppCompatActivity() {
             // Call the method on HomeFragment
             homeFragment?.onPermissionResult(isGranted)
         }
+    }
+
+
+
+    fun hideToolbar() {
+        binding.appBarMain.toolbar.visibility = View.GONE
+    }
+
+    fun showToolbar() {
+        binding.appBarMain.toolbar.visibility = View.VISIBLE
     }
 }
