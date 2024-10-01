@@ -28,5 +28,8 @@
     <string name="temperature_settings">Temperature</string>
     <string name="fahrenheit_rb">Fahrenheit</string>
     <string name="kelvin_rb">Kelvin</string>
+    <string name="meter_per_second_rb">Meter / Second</string>
+    <string name="mile_per_hour_rb">Mile / Hour</string>
+    <string name="wind_speed">Wind Speed</string>
 
 </resources>

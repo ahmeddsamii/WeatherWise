@@ -32,4 +32,8 @@
     <string name="temperature_settings">درجة الحراره</string>
     <string name="fahrenheit_rb">فهرنهايت</string>
     <string name="kelvin_rb">كيلفن</string>
+
+    <string name="meter_per_second_rb">متر / ثانيه</string>
+    <string name="mile_per_hour_rb">ميل / كم</string>
+    <string name="wind_speed">سرعة الرياح</string>
 </resources>
