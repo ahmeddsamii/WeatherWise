@@ -13,5 +13,7 @@ object Constants{
     const val LONGITUDE = "longitude"
     const val ENGLISH = "en"
     const val ARABIC = "ar"
+    const val TEMP_SHARED_PREFS = "temp_shared_prefs"
+    const val TEMP_SHARED_PREFS_KEY = "temp_shared_prefs_key"
 }
 
