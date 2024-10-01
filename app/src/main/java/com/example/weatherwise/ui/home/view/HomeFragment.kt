@@ -134,9 +134,9 @@ class HomeFragment : Fragment() {
             binding.tvCountryName.text = addresses?.get(0)?.getAddressLine(0) ?: "Unknown Location"
 
 
-            homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY)
+            homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY, language?:"en")
             homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY, language?:"en")
-            homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY)
+            homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY,language?:"en")
         }
     }
 
@@ -244,7 +244,8 @@ class HomeFragment : Fragment() {
                         homeViewModel.getHoursList(
                             p0.lastLocation?.latitude!!,
                             p0.lastLocation?.longitude!!,
-                            Constants.API_KEY
+                            Constants.API_KEY,
+                            language?:"en"
                         )
                     }
                 }
@@ -262,7 +263,8 @@ class HomeFragment : Fragment() {
                     homeViewModel.getForecastDataByDay(
                         p0.lastLocation?.latitude!!,
                         p0.lastLocation?.longitude!!,
-                        Constants.API_KEY
+                        Constants.API_KEY,
+                        language?:"en"
                     )
                 }
 
