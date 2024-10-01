@@ -179,7 +179,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/celsius_rb"
-                android:checked="true"
                 android:textColor="@color/white" />
 
             <RadioButton
@@ -187,6 +186,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/kelvin_rb"
+                android:checked="true"
                 android:textColor="@color/white" />
 
             <RadioButton
