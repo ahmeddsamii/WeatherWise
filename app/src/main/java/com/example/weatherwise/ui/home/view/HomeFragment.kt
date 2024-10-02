@@ -28,10 +28,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
+import com.example.weatherwise.db.PlacesLocalDataSource
 import com.example.weatherwise.helpers.NumberConverter
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.ListElement
 import com.example.weatherwise.model.TempUnit
+import com.example.weatherwise.network.api.RetrofitHelper
 import com.example.weatherwise.ui.home.viewModel.CurrentWeatherViewModelFactory
 import com.example.weatherwise.ui.home.viewModel.HomeViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -64,7 +66,7 @@ class HomeFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModelFactory = CurrentWeatherViewModelFactory(WeatherRepository.getInstance())
+        viewModelFactory = CurrentWeatherViewModelFactory(WeatherRepository.getInstance(requireContext()))
         homeViewModel = ViewModelProvider(this, viewModelFactory).get(HomeViewModel::class.java)
         sharedPreferences = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapsOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
