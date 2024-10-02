@@ -1,7 +1,9 @@
 import android.content.Context
 import com.example.weatherwise.db.PlacesLocalDataSource
+import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.model.WeatherForecastResponse
 import com.example.weatherwise.network.api.RetrofitHelper
+import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
 import retrofit2.Retrofit
 
@@ -25,5 +27,18 @@ class WeatherRepository private constructor(val retrofit: RetrofitHelper,val pla
 
     suspend fun getWeatherForecast(lat:Double, long:Double, apiKey:String,unit:String,lang:String): Response<WeatherForecastResponse>{
         return retrofit.apiService.getWeatherForecast(lat,long,apiKey,unit,lang)
+    }
+
+
+    suspend fun addPlace(place: FavoritePlace):Long{
+        return placesLocalDataSource.PlacesDao().addPlace(place)
+    }
+
+    suspend fun removePlace(place: FavoritePlace):Int{
+        return placesLocalDataSource.PlacesDao().deletePlace(place)
+    }
+
+    fun getAllLocalFavoritePlaces():Flow<List<FavoritePlace>>{
+        return placesLocalDataSource.PlacesDao().getAllLocalPlaces()
     }
 }
