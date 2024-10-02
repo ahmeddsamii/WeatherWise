@@ -12,6 +12,7 @@ import com.example.weatherwise.databinding.DayItemBinding
 import com.example.weatherwise.diffUtils.DailyWeatherDiffUtil
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.TempUnit
+import kotlin.time.times
 
 class DaysAdapter: ListAdapter<DailyWeather, DaysAdapter.DayViewHolder>(DailyWeatherDiffUtil()) {
     lateinit var binding:DayItemBinding
@@ -28,20 +29,32 @@ class DaysAdapter: ListAdapter<DailyWeather, DaysAdapter.DayViewHolder>(DailyWea
     }
 
     override fun onBindViewHolder(holder: DayViewHolder, position: Int) {
-
         tempUnit = when (tempSharedPreferences.getString(Constants.TEMP_SHARED_PREFS_KEY, "kelvin")) {
             "celsius" -> TempUnit("metric", "°C")
             "fahrenheit" -> TempUnit("imperial", "°F")
             else -> TempUnit("standard", "°K")
         }
 
-
         val currentDay = getItem(position)
         holder.binding.tvDay.text = currentDay.dayOfWeek
-        holder.binding.maxTemp.text = currentDay.maxTemp
-        holder.binding.minTemp.text = currentDay.minTemp+" ${tempUnit.symbol}"
-        holder.binding.icon.setImageResource(getWeatherIcon(currentDay.imageIcon?:""))
+
+        val maxTemp = when (tempUnit.apiParam) {
+            "metric" -> (currentDay.maxTemp.toInt() - 273.15).toInt().toString()
+            "imperial" -> ((currentDay.maxTemp.toInt() - 273.15) * 1.8 + 32).toInt().toString()
+            else -> currentDay.maxTemp
+        }
+        holder.binding.maxTemp.text = maxTemp
+
+        val minTemp = when (tempUnit.apiParam) {
+            "metric" -> (currentDay.minTemp.toInt() - 273.15).toInt().toString()
+            "imperial" -> ((currentDay.minTemp.toInt() - 273.15) * 1.8 + 32).toInt().toString()
+            else -> currentDay.minTemp
+        }
+        holder.binding.minTemp.text = "$minTemp ${tempUnit.symbol}"
+
+        holder.binding.icon.setImageResource(getWeatherIcon(currentDay.imageIcon ?: ""))
     }
+
 
 
 
