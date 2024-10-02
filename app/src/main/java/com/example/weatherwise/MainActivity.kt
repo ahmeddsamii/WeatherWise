@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.mapFragment -> hideToolbar()
+                R.id.map_favorite -> hideToolbar()
                 else -> showToolbar()
             }
         }
