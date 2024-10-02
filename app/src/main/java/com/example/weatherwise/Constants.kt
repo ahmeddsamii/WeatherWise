@@ -17,5 +17,7 @@ object Constants{
     const val TEMP_SHARED_PREFS_KEY = "temp_shared_prefs_key"
     const val WIND_SPEED_SHARED_PREFS = "wind_speed_shared_prefs"
     const val WIND_SPEED_SHARED_PREFS_KEY = "wind_speed_shared_prefs_key"
+    const val COMING_FROM_FAVORITE_MAP_SHARED_PREFS = "coming_from_favorite_map"
+    const val COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY = "coming_from_favorite_map_key"
 }
 
