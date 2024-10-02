@@ -19,6 +19,7 @@ class SettingsFragment : Fragment() {
     private lateinit var languageSharedPreferenceies: SharedPreferences
     private lateinit var mapOrGpsSharedPreferences: SharedPreferences
     private lateinit var tempSharedPreference:SharedPreferences
+    private lateinit var windSpeedSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +30,7 @@ class SettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        windSpeedSharedPreferences = requireActivity().getSharedPreferences(Constants.WIND_SPEED_SHARED_PREFS, Context.MODE_PRIVATE)
         tempSharedPreference = requireActivity().getSharedPreferences(Constants.TEMP_SHARED_PREFS, Context.MODE_PRIVATE)
         languageSharedPreferenceies = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
@@ -84,6 +86,13 @@ class SettingsFragment : Fragment() {
             mapOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"not_map").apply()
             binding.usingGPS.isChecked = true
         }
+
+        binding.meterPerSecond.setOnClickListener {
+            windSpeedSharedPreferences.edit().putString(Constants.WIND_SPEED_SHARED_PREFS_KEY,"meter").apply()
+        }
+        binding.milePerHour.setOnClickListener {
+            windSpeedSharedPreferences.edit().putString(Constants.WIND_SPEED_SHARED_PREFS_KEY, "mile").apply()
+        }
     }
 
     override fun onStart() {
@@ -109,6 +118,14 @@ class SettingsFragment : Fragment() {
             binding.fahrenheit.isChecked = true
         }else{
             binding.kelvin.isChecked = true
+        }
+
+        val windSpeed = windSpeedSharedPreferences.getString(Constants.WIND_SPEED_SHARED_PREFS_KEY, "meter")
+
+        if (windSpeed == "meter"){
+            binding.meterPerSecond.isChecked = true
+        }else{
+            binding.milePerHour.isChecked = true
         }
 
 
