@@ -1,4 +1,4 @@
-package com.example.weatherwise.ui.favorite
+package com.example.weatherwise.ui.favorite.view
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.weatherwise.databinding.FragmentFavoriteBinding
+import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModel
 
 class FavoriteFragment : Fragment() {
 
@@ -24,10 +25,7 @@ class FavoriteFragment : Fragment() {
         binding = FragmentFavoriteBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textGallery
-        favoriteViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
+
         return root
     }
 

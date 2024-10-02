@@ -1,4 +1,4 @@
-package com.example.weatherwise.ui.favorite
+package com.example.weatherwise.ui.favorite.viewModel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
