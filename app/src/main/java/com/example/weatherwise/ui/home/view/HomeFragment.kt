@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
+import com.example.weatherwise.helpers.NumberConverter
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.ListElement
 import com.example.weatherwise.model.TempUnit
@@ -145,9 +146,9 @@ class HomeFragment : Fragment() {
             binding.tvCountryName.text = addresses?.get(0)?.getAddressLine(0) ?: "Unknown Location"
 
 
-            homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY,tempUnit.apiParam, language?:"en",)
-            homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY, tempUnit.apiParam,language?:"en")
-            homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY,tempUnit.apiParam,language?:"en")
+            homeViewModel.getHoursList(latitude, longitude, Constants.API_KEY,tempUnit.apiParam,language?:"en",)
+            homeViewModel.getCurrentWeather(latitude, longitude, Constants.API_KEY, tempUnit.apiParam, language ?: "en")
+            homeViewModel.getForecastDataByDay(latitude, longitude, Constants.API_KEY, tempUnit.apiParam, language ?: "en")
         }
     }
 
@@ -174,15 +175,28 @@ class HomeFragment : Fragment() {
         }
 
         homeViewModel.currentWeather.observe(viewLifecycleOwner) {
-            binding.weatherTemp.text = "${it.main?.temp?.toInt()} ${tempUnit.symbol}"
-            binding.weatherDescription.text = it.weather?.get(0)?.description
-            binding.ivIcon.setImageResource(getWeatherIcon(it.weather?.get(0)?.icon!!))
-            binding.pressureValue.text = it.main?.pressure.toString() + " hpa"
-            binding.humidityValue.text = it.main?.humidity.toString() + " %"
-            binding.windValue.text = it.wind?.speed.toString() + " m/s"
-            binding.cloudValue.text = it.clouds?.all.toString() + " %"
-            binding.seaLevelValue.text = it.main?.seaLevel.toString() + " pa"
-            binding.visibleValue.text = it.visibility.toString() + " m"
+            if(language == "ar"){
+                binding.weatherTemp.text = NumberConverter.convertToArabicNumerals("${it.main?.temp?.toInt()} ${tempUnit.symbol}")
+                binding.weatherDescription.text = it.weather?.get(0)?.description
+                binding.ivIcon.setImageResource(getWeatherIcon(it.weather?.get(0)?.icon!!))
+                binding.pressureValue.text = NumberConverter.convertToArabicNumerals(it.main?.pressure.toString() + " hpa")
+                binding.humidityValue.text = NumberConverter.convertToArabicNumerals(it.main?.humidity.toString() + " %")
+                binding.windValue.text = NumberConverter.convertToArabicNumerals(it.wind?.speed.toString() + " m/s")
+                binding.cloudValue.text = NumberConverter.convertToArabicNumerals(it.clouds?.all.toString() + " %")
+                binding.seaLevelValue.text = NumberConverter.convertToArabicNumerals(it.main?.seaLevel.toString() + " pa")
+                binding.visibleValue.text = NumberConverter.convertToArabicNumerals(it.visibility.toString() + " m")
+            }else{
+                binding.weatherTemp.text = "${it.main?.temp?.toInt()} ${tempUnit.symbol}"
+                binding.weatherDescription.text = it.weather?.get(0)?.description
+                binding.ivIcon.setImageResource(getWeatherIcon(it.weather?.get(0)?.icon!!))
+                binding.pressureValue.text = it.main?.pressure.toString() + " hpa"
+                binding.humidityValue.text = it.main?.humidity.toString() + " %"
+                binding.windValue.text = it.wind?.speed.toString() + " m/s"
+                binding.cloudValue.text = it.clouds?.all.toString() + " %"
+                binding.seaLevelValue.text = it.main?.seaLevel.toString() + " pa"
+                binding.visibleValue.text = it.visibility.toString() + " m"
+            }
+
         }
 
         homeViewModel.dailyForecast.observe(viewLifecycleOwner) { dailyMap ->
@@ -198,6 +212,8 @@ class HomeFragment : Fragment() {
                         minTemp?.toInt().toString()
                     )
                 )
+
+                Log.i("TAG", "onViewCreated: MAX TEMP $maxTemp")
 
                 val adapter = DaysAdapter()
                 binding.daysRecyclerView.apply {
@@ -270,6 +286,7 @@ class HomeFragment : Fragment() {
                         tempUnit.apiParam,
                         language?:"en"
                     )
+
                 }
 
                 lifecycleScope.launch(Dispatchers.IO) {
@@ -277,7 +294,7 @@ class HomeFragment : Fragment() {
                         p0.lastLocation?.latitude!!,
                         p0.lastLocation?.longitude!!,
                         Constants.API_KEY,
-                        tempUnit.apiParam,
+                        "metric",
                         language?:"en"
                     )
                 }
@@ -399,7 +416,3 @@ class HomeFragment : Fragment() {
         }
     }
 }
-
-
-
-
