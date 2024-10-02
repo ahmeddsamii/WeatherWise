@@ -61,6 +61,7 @@ class HomeFragment : Fragment() {
     private lateinit var comeFromMapsSharedPrefs: SharedPreferences
     private lateinit var mapsOrGpsSharedPreferences: SharedPreferences
     private lateinit var tempSharedPreferences: SharedPreferences
+    lateinit var comingFromFavoriteSharedPreferences: SharedPreferences
     private var language:String? = null
     lateinit var tempUnit: TempUnit
 
@@ -71,6 +72,7 @@ class HomeFragment : Fragment() {
         sharedPreferences = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapsOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
         tempSharedPreferences = requireActivity().getSharedPreferences(Constants.TEMP_SHARED_PREFS, Context.MODE_PRIVATE)
+        comingFromFavoriteSharedPreferences = requireActivity().getSharedPreferences(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS, Context.MODE_PRIVATE)
         fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
         language =
             sharedPreferences.getString(Constants.LANGUAGE_KEY_SHARED_PREFERENCE, "default")
@@ -113,30 +115,36 @@ class HomeFragment : Fragment() {
 
         val isComingFromMap = comeFromMapsSharedPrefs.getBoolean(Constants.COME_FROM_MAP_KEY, false)
         val gpsOrMap = mapsOrGpsSharedPreferences.getString(Constants.MAP_OR_GPS_KEY, "default")
-        if (!isComingFromMap || gpsOrMap == "not_map") {
-            if (checkSelfPermission()) {
-                if (isLocationEnabled()) {
-                    getLocation()
-                } else {
-                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                    startActivity(intent)
-                }
-            } else {
-                requestPermission()
+        val isComingFromFavorite = comingFromFavoriteSharedPreferences.getString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false") == "true"
+
+        when {
+            isComingFromFavorite -> {
+                val latitude = HomeFragmentArgs.fromBundle(requireArguments()).latitude
+                val longitude = HomeFragmentArgs.fromBundle(requireArguments()).longitude
+                updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
+                // Reset the flag
+                comingFromFavoriteSharedPreferences.edit().putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
             }
-        } else {
-            if (arguments != null){
+            isComingFromMap && gpsOrMap == "map" -> {
                 val latitude = comeFromMapsSharedPrefs.getFloat(Constants.LATITUDE, 0.0f)
                 val longitude = comeFromMapsSharedPrefs.getFloat(Constants.LONGITUDE, 0.0f)
-
                 updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
-
-                //mapSharedPreferences.edit().putBoolean(Constants.COME_FROM_MAP_KEY, false).apply()
+                // Reset the flag
+                comeFromMapsSharedPrefs.edit().putBoolean(Constants.COME_FROM_MAP_KEY, false).apply()
             }
-
+            else -> {
+                if (checkSelfPermission()) {
+                    if (isLocationEnabled()) {
+                        getLocation()
+                    } else {
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        startActivity(intent)
+                    }
+                } else {
+                    requestPermission()
+                }
+            }
         }
-
-
     }
 
     private fun updateLocationAndFetchWeather(latitude: Double, longitude: Double) {
