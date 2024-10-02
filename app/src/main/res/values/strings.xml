@@ -32,5 +32,6 @@
     <string name="mile_per_hour_rb">Mile / Hour</string>
     <string name="wind_speed">Wind Speed</string>
     <string name="settings">Settings</string>
+    <string name="weather_nav_header">Weather</string>
 
 </resources>
