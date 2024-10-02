@@ -31,5 +31,6 @@
     <string name="meter_per_second_rb">Meter / Second</string>
     <string name="mile_per_hour_rb">Mile / Hour</string>
     <string name="wind_speed">Wind Speed</string>
+    <string name="settings">Settings</string>
 
 </resources>
