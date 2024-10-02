@@ -4,4 +4,4 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity
-data class FavoritePlace(@PrimaryKey val address:String, val latitude:Double, val longitude:Double)
+data class FavoritePlace(val address:String, @PrimaryKey val latitude:Double, val longitude:Double)
