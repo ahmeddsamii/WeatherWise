@@ -21,9 +21,9 @@ class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
     private val _dailyForecast = MutableLiveData<Map<String, List<ListElement>>>()
     val dailyForecast: LiveData<Map<String, List<ListElement>>> = _dailyForecast
 
-    fun getHoursList(lat: Double, long: Double, apiKey: String,unit:String, lang: String) {
+    fun getHoursList(lat: Double, long: Double, apiKey: String, unit: String,lang: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val response = cRepo.getWeatherForecast(lat, long,unit, apiKey,lang)
+            val response = cRepo.getWeatherForecast(lat, long, apiKey, unit,lang)
             if (response.isSuccessful) {
                 _hoursList.postValue(response.body()?.list)
             }
