@@ -1,4 +1,4 @@
-package com.example.weatherwise
+package com.example.weatherwise.ui.map
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -10,6 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
+import com.example.weatherwise.Constants
+import com.example.weatherwise.R
 import com.example.weatherwise.databinding.BottomSheetDialogBinding
 import com.example.weatherwise.databinding.FragmentMapBinding
 import com.google.android.gms.maps.GoogleMap
