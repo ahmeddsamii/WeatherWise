@@ -37,4 +37,5 @@
     <string name="mile_per_hour_rb">ميل / كم</string>
     <string name="wind_speed">سرعة الرياح</string>
     <string name="settings">الاعدادات</string>
+    <string name="weather_nav_header">الطقس</string>
 </resources>
