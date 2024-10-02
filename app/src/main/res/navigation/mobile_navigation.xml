@@ -22,7 +22,14 @@
         android:id="@+id/nav_favorite"
         android:name="com.example.weatherwise.ui.favorite.view.FavoriteFragment"
         android:label="@string/menu_favorite"
-        tools:layout="@layout/fragment_favorite" />
+        tools:layout="@layout/fragment_favorite" >
+        <action
+            android:id="@+id/action_nav_favorite_to_favoriteMap2"
+            app:destination="@id/map_favorite" />
+        <action
+            android:id="@+id/action_nav_favorite_to_nav_home"
+            app:destination="@id/nav_home" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_alert"
@@ -60,5 +67,10 @@
             android:id="@+id/action_mapFragment_to_nav_home"
             app:destination="@id/nav_home" />
     </fragment>
+    <fragment
+        android:id="@+id/map_favorite"
+        android:name="com.example.weatherwise.ui.map.FavoriteMap"
+        android:label="map"
+        tools:layout="@layout/fragment_favorite_map" />
 
 </navigation>
