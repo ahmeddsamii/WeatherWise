@@ -7,7 +7,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.weatherwise.model.FavoritePlace
 
-@Database(entities = [FavoritePlace::class], version = 2)
+@Database(entities = [FavoritePlace::class], version = 3)
 abstract class PlacesLocalDataSource:RoomDatabase() {
     abstract fun PlacesDao():PlacesDao
 
