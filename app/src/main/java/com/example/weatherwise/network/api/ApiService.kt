@@ -14,7 +14,7 @@ interface ApiService {
         @Query("appid") apiKey: String,
         @Query("units") units: String,
         @Query("lang") lang:String
-        ): Response<WeatherResponse>
+        ): WeatherResponse
 
     @GET("forecast")
     suspend fun getWeatherForecast(
@@ -23,5 +23,5 @@ interface ApiService {
         @Query("appid") apiKey: String,
         @Query("unit") unit:String,
         @Query("lang") lang:String
-    ): Response<WeatherForecastResponse>
+    ): WeatherForecastResponse
 }
