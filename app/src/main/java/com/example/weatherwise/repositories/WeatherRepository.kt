@@ -3,7 +3,9 @@ import com.example.weatherwise.db.PlacesLocalDataSource
 import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.model.WeatherForecastResponse
 import com.example.weatherwise.network.api.RetrofitHelper
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import retrofit2.Response
 import retrofit2.Retrofit
 
@@ -21,12 +23,20 @@ class WeatherRepository private constructor(val retrofit: RetrofitHelper,val pla
    }
 
 
-    suspend fun getCurrentWeather(lat:Double, long:Double, apiKey:String,unit:String, lang:String): Response<WeatherResponse> {
-       return retrofit.apiService.getCurrentWeather(lat,long,apiKey,unit,lang)
+    suspend fun getCurrentWeather(lat: Double, long: Double, apiKey: String, unit: String, lang: String): Flow<WeatherResponse> {
+        return flow {
+            while (true){
+                val response = retrofit.apiService.getCurrentWeather(lat, long, apiKey, unit, lang)
+                emit(response)
+                delay(200)
+            }
+        }
     }
 
-    suspend fun getWeatherForecast(lat:Double, long:Double, apiKey:String,unit:String,lang:String): Response<WeatherForecastResponse>{
-        return retrofit.apiService.getWeatherForecast(lat,long,apiKey,unit,lang)
+    suspend fun getWeatherForecast(lat:Double, long:Double, apiKey:String,unit:String,lang:String): Flow<WeatherForecastResponse>{
+        return flow {
+            emit(retrofit.apiService.getWeatherForecast(lat,long,apiKey,unit,lang))
+        }
     }
 
 
