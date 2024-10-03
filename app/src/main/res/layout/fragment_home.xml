@@ -7,6 +7,7 @@
     tools:context=".ui.home.view.HomeFragment">
 
 
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -104,6 +105,18 @@
 
             </androidx.cardview.widget.CardView>
 
+            <ProgressBar
+                android:id="@+id/progressbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:foregroundGravity="center"
+                android:textAlignment="center"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -124,6 +137,7 @@
 
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/lastItemCardView"
             android:layout_width="match_parent"
             app:cardCornerRadius="40dp"
             android:layout_marginHorizontal="8dp"
