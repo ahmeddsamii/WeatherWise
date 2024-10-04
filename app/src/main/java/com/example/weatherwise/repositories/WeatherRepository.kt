@@ -40,12 +40,18 @@ class WeatherRepository private constructor(val retrofit: RetrofitHelper,val pla
     }
 
 
-    suspend fun addPlace(place: FavoritePlace):Long{
-        return placesLocalDataSource.PlacesDao().addPlace(place)
+    suspend fun addPlace(place: FavoritePlace):Flow<Long>{
+        return flow {
+            emit( placesLocalDataSource.PlacesDao().addPlace(place))
+        }
+
     }
 
-    suspend fun removePlace(place: FavoritePlace):Int{
-        return placesLocalDataSource.PlacesDao().deletePlace(place)
+    suspend fun removePlace(place: FavoritePlace):Flow<Int>{
+        return flow {
+            emit(placesLocalDataSource.PlacesDao().deletePlace(place))
+        }
+
     }
 
     fun getAllLocalFavoritePlaces():Flow<List<FavoritePlace>>{

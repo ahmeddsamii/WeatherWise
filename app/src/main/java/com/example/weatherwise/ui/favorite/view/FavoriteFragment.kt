@@ -8,8 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weatherwise.Constants
@@ -17,6 +19,7 @@ import com.example.weatherwise.databinding.FragmentFavoriteBinding
 import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModel
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModelFactory
+import com.example.weatherwise.uiState.UiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -58,8 +61,23 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
     }
 
     private fun observeFavoritePlaces() {
-        favoriteViewModel.allLocalFavoritePlaces.observe(viewLifecycleOwner) { places ->
-            adapter.submitList(places)
+//        favoriteViewModel.allLocalFavoritePlaces.observe(viewLifecycleOwner) { places ->
+//            adapter.submitList(places)
+//        }
+
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.CREATED){
+                favoriteViewModel.allLocalFavoritePlaces.collect{state->
+                    when(state){
+                        is UiState.Loading -> ""
+                        is UiState.Failure -> ""
+                        is UiState.Success<*> -> {
+                            val list = state.data as List<FavoritePlace>
+                            adapter.submitList(list)
+                        }
+                    }
+                }
+            }
         }
     }
 
