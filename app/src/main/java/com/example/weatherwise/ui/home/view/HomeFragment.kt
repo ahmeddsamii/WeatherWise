@@ -17,7 +17,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
@@ -29,7 +28,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.weatherwise.UiStatus
+import com.example.weatherwise.uiState.UiState
 import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
@@ -37,7 +36,6 @@ import com.example.weatherwise.helpers.NumberConverter
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.ListElement
 import com.example.weatherwise.model.TempUnit
-import com.example.weatherwise.model.WeatherForecastResponse
 import com.example.weatherwise.ui.home.viewModel.CurrentWeatherViewModelFactory
 import com.example.weatherwise.ui.home.viewModel.HomeViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -145,7 +143,8 @@ class HomeFragment : Fragment() {
                 val latitude = HomeFragmentArgs.fromBundle(requireArguments()).latitude
                 val longitude = HomeFragmentArgs.fromBundle(requireArguments()).longitude
                 updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
-
+                //reset the sharedPrefs to prevent crash
+                comingFromFavoriteSharedPreferences.edit().putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
             }
 
             isComingFromMap && gpsOrMap == "map" -> {
@@ -215,9 +214,9 @@ class HomeFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 homeViewModel.hoursList.collect { responseState ->
                     when (responseState) {
-                        is UiStatus.Loading -> ""
-                        is UiStatus.Failure -> ""
-                        is UiStatus.Success<*> -> {
+                        is UiState.Loading -> ""
+                        is UiState.Failure -> ""
+                        is UiState.Success<*> -> {
                             val hoursList = responseState.data as List<ListElement>
                             if (isAdded) {
                                 val adapter = HoursAdapter()
@@ -243,7 +242,7 @@ class HomeFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 homeViewModel.currentWeather.collect { response ->
                     when (response) {
-                        is UiStatus.Failure -> {
+                        is UiState.Failure -> {
                             binding.cardView.visibility = View.GONE
                             binding.daysRecyclerView.visibility = View.GONE
                             binding.hoursRecyclerView.visibility = View.GONE
@@ -253,7 +252,7 @@ class HomeFragment : Fragment() {
                             binding.tvCountryName.visibility = View.GONE
                         }
 
-                        is UiStatus.Success<*> -> {
+                        is UiState.Success<*> -> {
                             binding.cardView.visibility = View.VISIBLE
                             binding.daysRecyclerView.visibility = View.VISIBLE
                             binding.hoursRecyclerView.visibility = View.VISIBLE

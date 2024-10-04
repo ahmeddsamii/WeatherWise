@@ -5,7 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.weatherwise.UiStatus
+import com.example.weatherwise.uiState.UiState
 import com.example.weatherwise.model.ListElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,10 +15,10 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
 
-    private val _hoursList = MutableStateFlow<UiStatus>(UiStatus.Loading)
+    private val _hoursList = MutableStateFlow<UiState>(UiState.Loading)
     val hoursList = _hoursList.asStateFlow()
 
-    private val _currentWeather = MutableStateFlow<UiStatus>(UiStatus.Loading)
+    private val _currentWeather = MutableStateFlow<UiState>(UiState.Loading)
     val currentWeather = _currentWeather.asStateFlow()
 
     private val _dailyForecast = MutableLiveData<Map<String, List<ListElement>>>()
@@ -28,9 +28,9 @@ class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             cRepo.getWeatherForecast(lat,long,apiKey,unit,lang)
                 .catch {
-                    _hoursList.value = UiStatus.Failure(it.message!!)
+                    _hoursList.value = UiState.Failure(it.message!!)
                 }.collect{
-                    _hoursList.value = UiStatus.Success(it.list)
+                    _hoursList.value = UiState.Success(it.list)
                 }
         }
     }
@@ -40,10 +40,10 @@ class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
         viewModelScope.launch {
             cRepo.getCurrentWeather(lat, long, apiKey, unit, lang)
                 .catch { exception ->
-                    _currentWeather.value = UiStatus.Failure(exception.message ?: "Unknown error")
+                    _currentWeather.value = UiState.Failure(exception.message ?: "Unknown error")
                 }
                 .collect { response ->
-                    _currentWeather.value = UiStatus.Success(response)
+                    _currentWeather.value = UiState.Success(response)
                 }
         }
     }
@@ -58,7 +58,7 @@ class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             cRepo.getWeatherForecast(lat,long,apiKey,unit,lang)
                 .catch {
-                    _hoursList.value = UiStatus.Failure(it.message!!)
+                    _hoursList.value = UiState.Failure(it.message!!)
                 }.collect{
                     processForecastDataByDay(it.list)
                 }
