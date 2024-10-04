@@ -1,4 +1,4 @@
-package com.example.weatherwise.ui.alert
+package com.example.weatherwise.ui.alert.viewModel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
