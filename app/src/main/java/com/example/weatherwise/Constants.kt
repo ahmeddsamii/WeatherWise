@@ -19,5 +19,15 @@ object Constants{
     const val WIND_SPEED_SHARED_PREFS_KEY = "wind_speed_shared_prefs_key"
     const val COMING_FROM_FAVORITE_MAP_SHARED_PREFS = "coming_from_favorite_map"
     const val COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY = "coming_from_favorite_map_key"
+    const val OFFLINE_LATITUDE ="OFFLINE_LATITUDE"
+    const val OFFLINE_LONGITUDE = "OFFLINE_LONGITUDE"
+    const val OFFLINE_LOCATION_SHARED_PREFS = "OFFLINE_LOCATION_SHARED_PREFS"
+    const val OFFLINE_LOCATION_SHARED_PREFS_KEY = "OFFLINE_LOCATION_SHARED_PREFS_KEY"
+    const val NOTIFICATION_SHARED_PREFS = "notification_shared_prefs"
+    const val NOTIFICATION_SHARED_PREFS_KEY = "notification_shared_prefs_key"
 }
+
+
+//adb5f9b065df229b523bbc9ef5b27f49
+//e9556a170d2136f283a92527fbc67b3d
 
