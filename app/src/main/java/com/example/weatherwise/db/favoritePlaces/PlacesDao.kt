@@ -1,4 +1,4 @@
-package com.example.weatherwise.db
+package com.example.weatherwise.db.favoritePlaces
 
 import androidx.room.Dao
 import androidx.room.Delete
