@@ -33,5 +33,18 @@
     <string name="wind_speed">Wind Speed</string>
     <string name="settings">Settings</string>
     <string name="weather_nav_header">Weather</string>
+    <string name="dash">-</string>
+    <string name="notification_cv">Notification</string>
+    <string name="notification_rb">Notification</string>
+    <string name="alarm_rb">Alarm</string>
+    <string name="ok">OK</string>
+    <string name="alarm">Alarm</string>
+    <string name="couldn_t_fetch_your_location">Couldn\'t fetch your location</string>
+    <string name="please_allow_location_to_get_weather_in_your_area">Please allow location to get weather in your area</string>
+    <string name="allow">Allow</string>
+    <string name="intial_map_text">Map</string>
+    <string name="intial_gps_text">GPS</string>
+    <string name="intial_location_text">Location</string>
+    <string name="initial_setup_title_text">Initial Setup</string>
 
 </resources>
