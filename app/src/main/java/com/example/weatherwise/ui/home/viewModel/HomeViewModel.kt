@@ -7,11 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherwise.uiState.UiState
 import com.example.weatherwise.model.ListElement
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.nio.charset.Charset
 
 class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
 
@@ -24,12 +26,12 @@ class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
     private val _dailyForecast = MutableLiveData<Map<String, List<ListElement>>>()
     val dailyForecast: LiveData<Map<String, List<ListElement>>> = _dailyForecast
 
-    fun getHoursList(lat: Double, long: Double, apiKey: String, unit: String,lang: String) {
+    fun getHoursList(lat: Double, long: Double, apiKey: String, unit: String, lang: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            cRepo.getWeatherForecast(lat,long,apiKey,unit,lang)
+            cRepo.getWeatherForecast(lat, long, apiKey, unit, lang)
                 .catch {
                     _hoursList.value = UiState.Failure(it.message!!)
-                }.collect{
+                }.collect {
                     _hoursList.value = UiState.Success(it.list)
                 }
         }
@@ -54,14 +56,22 @@ class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
         _dailyForecast.postValue(groupedByDay)
     }
 
-    suspend fun getForecastDataByDay(lat: Double, long: Double, apiKey: String,unit:String, lang: String){
+    suspend fun getForecastDataByDay(
+        lat: Double,
+        long: Double,
+        apiKey: String,
+        unit: String,
+        lang: String
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
-            cRepo.getWeatherForecast(lat,long,apiKey,unit,lang)
+            cRepo.getWeatherForecast(lat, long, apiKey, unit, lang)
                 .catch {
                     _hoursList.value = UiState.Failure(it.message!!)
-                }.collect{
+                }.collect {
                     processForecastDataByDay(it.list)
                 }
         }
     }
+
+
 }
