@@ -1,21 +1,21 @@
 import android.content.Context
-import com.example.weatherwise.db.PlacesLocalDataSource
+import com.example.weatherwise.db.alertPlaces.AlertLocalDatabase
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.model.AlertDto
 import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.model.WeatherForecastResponse
 import com.example.weatherwise.network.api.RetrofitHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import retrofit2.Response
-import retrofit2.Retrofit
 
-class WeatherRepository private constructor(val retrofit: RetrofitHelper,val placesLocalDataSource: PlacesLocalDataSource) {
+class WeatherRepository private constructor(val retrofit: RetrofitHelper,val placesLocalDataSource: PlacesLocalDataSource, val alertLocalDatabase: AlertLocalDatabase) {
 
    companion object{
        private var INSTANCE: WeatherRepository? = null
        fun getInstance(context: Context):WeatherRepository{
            return INSTANCE?: synchronized(this){
-               val instance = WeatherRepository(RetrofitHelper, PlacesLocalDataSource.getInstance(context))
+               val instance = WeatherRepository(RetrofitHelper, PlacesLocalDataSource.getInstance(context), AlertLocalDatabase.getInstance(context))
                 INSTANCE=instance
                instance
            }
@@ -56,5 +56,24 @@ class WeatherRepository private constructor(val retrofit: RetrofitHelper,val pla
 
     fun getAllLocalFavoritePlaces():Flow<List<FavoritePlace>>{
         return placesLocalDataSource.PlacesDao().getAllLocalPlaces()
+    }
+
+
+    fun addAlert(alertDto: AlertDto):Flow<Long>{
+        return flow {
+            emit(alertLocalDatabase.alertDao().insertAlert(alertDto))
+        }
+    }
+
+
+    fun deleteAlert(alertDto: AlertDto):Flow<Int>{
+        return flow {
+            emit(alertLocalDatabase.alertDao().deleteAlert(alertDto))
+        }
+    }
+
+
+    fun getLocalAlertsByDate():Flow<List<AlertDto>>{
+        return alertLocalDatabase.alertDao().getAlertsByStartDate()
     }
 }
