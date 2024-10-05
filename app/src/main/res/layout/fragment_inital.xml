@@ -12,7 +12,6 @@
     tools:context=".initalFragment.InitalFragment">
 
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -28,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Initial Setup"
+            android:text="@string/initial_setup_title_text"
             android:textAlignment="center"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
@@ -41,30 +40,32 @@
             android:id="@+id/location_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="Location"
+            android:layout_marginTop="92dp"
+            android:text="@string/intial_location_text"
             android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toStartOf="@+id/location_options"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title" />
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Radio buttons for GPS and Map options -->
         <RadioGroup
             android:id="@+id/location_options"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="10dp"
             android:orientation="horizontal"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/location_label">
+            app:layout_constraintBottom_toBottomOf="@+id/location_label"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/location_label"
+            app:layout_constraintTop_toTopOf="@+id/location_label">
 
             <RadioButton
                 android:id="@+id/gps_option"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="GPS"
+                android:text="@string/intial_gps_text"
                 android:textColor="#FFFFFF" />
 
             <RadioButton
@@ -72,44 +73,46 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="Map"
+                android:text="@string/intial_map_text"
                 android:textColor="#FFFFFF" />
         </RadioGroup>
 
-        <!-- Notifications toggle switch -->
         <TextView
             android:id="@+id/notification_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="Notifications"
+            android:layout_marginTop="49dp"
+            android:layout_marginBottom="92dp"
+            android:text="@string/alarm"
             android:textColor="#FFFFFF"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/location_options" />
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/location_label"
+            app:layout_constraintStart_toStartOf="@+id/location_label"
+            app:layout_constraintTop_toBottomOf="@+id/location_label" />
 
         <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/notification_switch"
+            android:id="@+id/alarm_switch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="10dp"
             android:checked="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/notification_label" />
+            app:layout_constraintBottom_toBottomOf="@+id/notification_label"
+            app:layout_constraintEnd_toEndOf="@+id/location_options"
+            app:layout_constraintStart_toStartOf="@+id/location_options"
+            app:layout_constraintTop_toTopOf="@+id/notification_label"
+            app:layout_constraintVertical_bias="0.541" />
 
-        <!-- OK button -->
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/ok_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:backgroundTint="#FF00FF"
-            android:text="OK"
+            android:background="@drawable/button_custom_shape"
+            android:text="@string/ok"
             android:textColor="#FFFFFF"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/notification_switch" />
+            app:layout_constraintTop_toBottomOf="@id/alarm_switch" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
