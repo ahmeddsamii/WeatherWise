@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.Ringtone
@@ -15,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 
 class AlarmReceiver : BroadcastReceiver() {
+    private lateinit var notificationSharedPreferences: SharedPreferences
 
     companion object {
         const val CHANNEL_ID = "WeatherAlertChannel"
@@ -24,6 +26,7 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        notificationSharedPreferences = context.getSharedPreferences(Constants.NOTIFICATION_SHARED_PREFS,Context.MODE_PRIVATE)
         when (intent.action) {
             ACTION_DISMISS -> dismissAlert(context)
             else -> showNotification(context)
@@ -57,8 +60,14 @@ class AlarmReceiver : BroadcastReceiver() {
         val notificationManager = ContextCompat.getSystemService(context, NotificationManager::class.java)
         notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
 
-        // Play the sound manually
-        playSound(context, soundUri)
+
+        val notificationOrAlarm = notificationSharedPreferences.getString(Constants.NOTIFICATION_SHARED_PREFS_KEY, "alarm")
+
+        if (notificationOrAlarm == "alarm"){
+            // Play the sound manually
+            playSound(context, soundUri)
+        }
+
     }
 
     private fun playSound(context: Context, soundUri: android.net.Uri) {
