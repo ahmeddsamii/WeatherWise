@@ -17,7 +17,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -27,11 +29,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.transition.Visibility
 import com.example.weatherwise.uiState.UiState
 import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
+import com.example.weatherwise.helpers.NetworkUtil
 import com.example.weatherwise.helpers.NumberConverter
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.ListElement
@@ -44,8 +49,13 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileInputStream
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -64,6 +74,7 @@ class HomeFragment : Fragment() {
     private lateinit var mapsOrGpsSharedPreferences: SharedPreferences
     private lateinit var tempSharedPreferences: SharedPreferences
     lateinit var comingFromFavoriteSharedPreferences: SharedPreferences
+    lateinit var offlineLocationSharedPreferences: SharedPreferences
     private var language: String? = null
     lateinit var tempUnit: TempUnit
 
@@ -87,6 +98,9 @@ class HomeFragment : Fragment() {
         comingFromFavoriteSharedPreferences = requireActivity().getSharedPreferences(
             Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS,
             Context.MODE_PRIVATE
+        )
+        offlineLocationSharedPreferences = requireActivity().getSharedPreferences(
+            Constants.OFFLINE_LOCATION_SHARED_PREFS, Context.MODE_PRIVATE
         )
         fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
         language =
@@ -131,6 +145,8 @@ class HomeFragment : Fragment() {
     override fun onStart() {
         super.onStart()
 
+
+
         val isComingFromMap = comeFromMapsSharedPrefs.getBoolean(Constants.COME_FROM_MAP_KEY, false)
         val gpsOrMap = mapsOrGpsSharedPreferences.getString(Constants.MAP_OR_GPS_KEY, "default")
         val isComingFromFavorite = comingFromFavoriteSharedPreferences.getString(
@@ -144,27 +160,52 @@ class HomeFragment : Fragment() {
                 val longitude = HomeFragmentArgs.fromBundle(requireArguments()).longitude
                 updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
                 //reset the sharedPrefs to prevent crash
-                comingFromFavoriteSharedPreferences.edit().putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
+                comingFromFavoriteSharedPreferences.edit()
+                    .putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
+                mapsOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"not_map").apply()
             }
 
             isComingFromMap && gpsOrMap == "map" -> {
                 val latitude = comeFromMapsSharedPrefs.getFloat(Constants.LATITUDE, 0.0f)
                 val longitude = comeFromMapsSharedPrefs.getFloat(Constants.LONGITUDE, 0.0f)
                 updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
-
+                comingFromFavoriteSharedPreferences.edit()
+                    .putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
+                mapsOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"map").apply()
             }
 
             else -> {
-                if (checkSelfPermission()) {
-                    if (isLocationEnabled()) {
-                        getLocation()
+                comingFromFavoriteSharedPreferences.edit()
+                    .putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
+                mapsOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"not_map").apply()
+                if (NetworkUtil.isInternetAvailable(requireContext())) {
+                    binding.disablePermissionCardView.visibility = View.GONE
+                    binding.disablePermissionConstraint.visibility = View.GONE
+                    binding.textView2.visibility = View.GONE
+                    binding.textView3.visibility = View.GONE
+                    binding.btnAllow.visibility = View.GONE
+                    if (checkSelfPermission()) {
+                        if (isLocationEnabled()) {
+                            getLocation()
+                        } else {
+                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            startActivity(intent)
+                        }
                     } else {
-                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                        startActivity(intent)
+                        requestPermission()
                     }
                 } else {
-                    requestPermission()
+//                    lifecycleScope.launch (Dis){  }
+//                    makeUiVisible()
+//                    val file = File(requireContext().cacheDir,"currentWeather")
+//                    val fis = FileInputStream(file)
+//                    val resultString = fis.readBytes().decodeToString()
+//                    val currentWeather = Gson().fromJson(resultString,WeatherResponse::class.java)
+//                    updateCurrentWeatherUi(currentWeather)
+//                    Snackbar.make(requireView(), "there is no connection", 2000).show()
+
                 }
+
             }
         }
     }
@@ -210,6 +251,11 @@ class HomeFragment : Fragment() {
         binding.tvDate.text = date
 
 
+        binding.btnAllow.setOnClickListener {
+            requestPermission()
+        }
+
+
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 homeViewModel.hoursList.collect { responseState ->
@@ -243,13 +289,16 @@ class HomeFragment : Fragment() {
                 homeViewModel.currentWeather.collect { response ->
                     when (response) {
                         is UiState.Failure -> {
-                            binding.cardView.visibility = View.GONE
-                            binding.daysRecyclerView.visibility = View.GONE
-                            binding.hoursRecyclerView.visibility = View.GONE
-                            binding.lastItemCardView.visibility = View.GONE
-                            binding.progressbar.visibility = View.GONE
-                            binding.tvDate.visibility = View.GONE
-                            binding.tvCountryName.visibility = View.GONE
+                            if (NetworkUtil.isInternetAvailable(requireContext())) {
+                                binding.cardView.visibility = View.GONE
+                                binding.daysRecyclerView.visibility = View.GONE
+                                binding.hoursRecyclerView.visibility = View.GONE
+                                binding.lastItemCardView.visibility = View.GONE
+                                binding.progressbar.visibility = View.GONE
+                                binding.tvDate.visibility = View.GONE
+                                binding.tvCountryName.visibility = View.GONE
+                                binding.disablePermissionCardView.visibility = View.GONE
+                            }
                         }
 
                         is UiState.Success<*> -> {
@@ -260,6 +309,12 @@ class HomeFragment : Fragment() {
                             binding.progressbar.visibility = View.GONE
                             binding.tvDate.visibility = View.VISIBLE
                             binding.tvCountryName.visibility = View.VISIBLE
+                            binding.disablePermissionCardView.visibility = View.GONE
+                            binding.disablePermissionCardView.visibility = View.GONE
+                            binding.disablePermissionConstraint.visibility = View.GONE
+                            binding.textView2.visibility = View.GONE
+                            binding.textView3.visibility = View.GONE
+                            binding.btnAllow.visibility = View.GONE
                             val it = response.data as WeatherResponse
                             Log.i("TAG", "response is: $it")
                             updateCurrentWeatherUi(it)
@@ -273,6 +328,7 @@ class HomeFragment : Fragment() {
                             binding.progressbar.visibility = View.VISIBLE
                             binding.tvDate.visibility = View.GONE
                             binding.tvCountryName.visibility = View.GONE
+                            binding.disablePermissionCardView.visibility = View.GONE
                         }
                     }
                 }
@@ -328,7 +384,7 @@ class HomeFragment : Fragment() {
 
 
     private fun getLocationRequest(): LocationRequest {
-        locationRequest = LocationRequest.Builder(1000 * 60)
+        locationRequest = LocationRequest.Builder(1000 * 180)
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .build()
         return locationRequest
@@ -338,33 +394,37 @@ class HomeFragment : Fragment() {
         return object : LocationCallback() {
             @RequiresApi(Build.VERSION_CODES.O)
             override fun onLocationResult(p0: LocationResult) {
-
-
                 super.onLocationResult(p0)
-                val country = Geocoder(requireContext(), changeLanguage(requireContext(), language))
+                val latitude = p0.lastLocation?.latitude!!
+                val longitude = p0.lastLocation?.longitude!!
+                offlineLocationSharedPreferences.edit()
+                    .putFloat(Constants.OFFLINE_LATITUDE, latitude.toFloat()).apply()
+                offlineLocationSharedPreferences.edit()
+                    .putFloat(Constants.OFFLINE_LONGITUDE, longitude.toFloat()).apply()
+
+
+                val locale = Locale(language ?: "en")
+                val country = Geocoder(requireContext(), locale)
                 val x = country.getFromLocation(
                     p0.lastLocation?.latitude!!,
                     p0.lastLocation?.longitude!!,
                     1
                 )
-                binding.tvCountryName.text = x?.get(0)!!.getAddressLine(0)
+                binding.tvCountryName.text = "${x?.get(0)!!.countryName}, ${x?.get(0)!!.adminArea}"
 
 
                 lifecycleScope.launch {
                     homeViewModel.getHoursList(
-                        p0.lastLocation?.latitude!!,
-                        p0.lastLocation?.longitude!!,
+                        latitude,
+                        longitude,
                         Constants.API_KEY,
                         tempUnit.apiParam,
                         language ?: "en"
                     )
                 }
-
-
-
                 homeViewModel.getCurrentWeather(
-                    p0.lastLocation?.latitude!!,
-                    p0.lastLocation?.longitude!!,
+                    latitude,
+                    longitude,
                     Constants.API_KEY,
                     tempUnit.apiParam,
                     language ?: "en"
@@ -373,8 +433,8 @@ class HomeFragment : Fragment() {
 
                 lifecycleScope.launch(Dispatchers.IO) {
                     homeViewModel.getForecastDataByDay(
-                        p0.lastLocation?.latitude!!,
-                        p0.lastLocation?.longitude!!,
+                        latitude,
+                        longitude,
                         Constants.API_KEY,
                         "metric",
                         language ?: "en"
@@ -399,26 +459,78 @@ class HomeFragment : Fragment() {
         }
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == Constants.LOCATION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (isLocationEnabled()) {
+                    binding.progressbar.visibility = View.VISIBLE
+                    getLocation()
+                }else{
+                    showLocationSettingsDialog()
+                }
+
+            } else if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED){
+                binding.disablePermissionCardView.visibility = View.VISIBLE
+                binding.disablePermissionConstraint.visibility = View.VISIBLE
+                binding.textView2.visibility = View.VISIBLE
+                binding.textView3.visibility = View.VISIBLE
+                binding.btnAllow.visibility = View.VISIBLE
+                binding.progressbar.visibility = View.GONE
+            }
+        }
+    }
+
     private fun requestPermission() {
-        ActivityCompat.requestPermissions(
-            requireActivity(),
+        binding.progressbar.visibility = View.GONE
+        binding.disablePermissionConstraint.visibility = View.GONE
+        binding.disablePermissionCardView.visibility = View.GONE
+        requestPermissions(
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
             Constants.LOCATION_REQUEST_CODE
         )
+
     }
 
-    fun onPermissionResult(isGranted: Boolean) {
-        if (isGranted) {
-            if (isLocationEnabled()) {
-                getLocation()
-            } else {
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
+
+//    fun onPermissionResult(isGranted: Boolean) {
+//        if (isGranted) {
+//            if (isLocationEnabled()) {
+//                getLocation()
+//            } else {
+//                showLocationSettingsDialog()
+//            }
+//        }
+//    }
+
+    fun showDisablePermissionUI() {
+        binding.disablePermissionCardView.visibility = View.VISIBLE
+        binding.disablePermissionConstraint.visibility = View.VISIBLE
+        binding.tvDate.visibility = View.GONE
+        binding.progressbar.visibility = View.GONE
+        binding.tvCountryName.visibility = View.GONE
+        binding.hoursRecyclerView.visibility = View.GONE
+        binding.cardView.visibility = View.GONE
+        binding.daysRecyclerView.visibility = View.GONE
+        binding.lastItemCardView.visibility = View.GONE
+    }
+
+    private fun showLocationSettingsDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Location Services Not Enabled")
+            .setMessage("Please enable location services to use this feature.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
             }
-        } else {
-//            binding.latitude.text = "couldn't fetch the data"
-//            binding.longitude.text = "couldn't fetch the data"
-        }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                showDisablePermissionUI()
+            }
+            .show()
     }
 
     private fun applyGradientToCard() {
@@ -529,4 +641,5 @@ class HomeFragment : Fragment() {
             binding.visibleValue.text = weatherResponse.visibility.toString() + " m"
         }
     }
+
 }
