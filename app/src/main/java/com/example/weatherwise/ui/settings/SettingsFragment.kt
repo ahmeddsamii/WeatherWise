@@ -20,6 +20,7 @@ class SettingsFragment : Fragment() {
     private lateinit var mapOrGpsSharedPreferences: SharedPreferences
     private lateinit var tempSharedPreference:SharedPreferences
     private lateinit var windSpeedSharedPreferences: SharedPreferences
+    private lateinit var notificationSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +35,7 @@ class SettingsFragment : Fragment() {
         tempSharedPreference = requireActivity().getSharedPreferences(Constants.TEMP_SHARED_PREFS, Context.MODE_PRIVATE)
         languageSharedPreferenceies = requireActivity().getSharedPreferences(Constants.LANGUAGE_SHARED_PREFS, Context.MODE_PRIVATE)
         mapOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
-
+        notificationSharedPreferences = requireActivity().getSharedPreferences(Constants.NOTIFICATION_SHARED_PREFS, Context.MODE_PRIVATE)
         binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -93,6 +94,15 @@ class SettingsFragment : Fragment() {
         binding.milePerHour.setOnClickListener {
             windSpeedSharedPreferences.edit().putString(Constants.WIND_SPEED_SHARED_PREFS_KEY, "mile").apply()
         }
+
+
+        binding.notification.setOnClickListener {
+            notificationSharedPreferences.edit().putString(Constants.NOTIFICATION_SHARED_PREFS_KEY, "notification").apply()
+        }
+
+        binding.alarm.setOnClickListener {
+            notificationSharedPreferences.edit().putString(Constants.NOTIFICATION_SHARED_PREFS_KEY, "alarm").apply()
+        }
     }
 
     override fun onStart() {
@@ -126,6 +136,15 @@ class SettingsFragment : Fragment() {
             binding.meterPerSecond.isChecked = true
         }else{
             binding.milePerHour.isChecked = true
+        }
+
+
+        val notificationOrAlarm = notificationSharedPreferences.getString(Constants.NOTIFICATION_SHARED_PREFS_KEY, "alarm")
+
+        if (notificationOrAlarm == "notification"){
+            binding.notification.isChecked = true
+        }else if (notificationOrAlarm == "alarm"){
+            binding.alarm.isChecked = true
         }
 
 
