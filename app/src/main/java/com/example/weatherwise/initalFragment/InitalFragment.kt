@@ -28,11 +28,12 @@ import kotlinx.coroutines.flow.combine
 class InitalFragment : DialogFragment() {
     lateinit var binding:FragmentInitalBinding
     lateinit var mapOrGpsSharedPreferences:SharedPreferences
+    private lateinit var notificationOrAlarmSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mapOrGpsSharedPreferences = requireActivity().getSharedPreferences(Constants.MAP_OR_GPS_SHARED_PREFS, Context.MODE_PRIVATE)
-
+        notificationOrAlarmSharedPreferences = requireActivity().getSharedPreferences(Constants.NOTIFICATION_SHARED_PREFS,Context.MODE_PRIVATE)
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -85,6 +86,12 @@ class InitalFragment : DialogFragment() {
                 mapOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"not_map").apply()
                 val action = InitalFragmentDirections.actionInitalFragmentToNavHome(0.0f, 0.0f)
                 findNavController().navigate(action)
+            }
+
+            if (binding.alarmSwitch.isChecked){
+                notificationOrAlarmSharedPreferences.edit().putString(Constants.NOTIFICATION_SHARED_PREFS_KEY,"alarm").apply()
+            }else{
+                notificationOrAlarmSharedPreferences.edit().putString(Constants.NOTIFICATION_SHARED_PREFS_KEY,"notification").apply()
             }
             dismiss()
         }
