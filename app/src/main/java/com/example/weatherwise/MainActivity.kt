@@ -74,25 +74,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == Constants.LOCATION_REQUEST_CODE) {
-            val isGranted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
 
-            // Find the NavHostFragment
-            val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as? NavHostFragment
-
-            // Find the HomeFragment within the NavHostFragment
-            val homeFragment = navHostFragment?.childFragmentManager?.fragments?.find { it is HomeFragment } as? HomeFragment
-
-            // Call the method on HomeFragment
-            homeFragment?.onPermissionResult(isGranted)
-        }
-    }
 
 
 
