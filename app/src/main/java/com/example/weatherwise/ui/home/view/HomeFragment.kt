@@ -80,8 +80,7 @@ class HomeFragment : Fragment() {
     private var language: String? = null
     lateinit var tempUnit: TempUnit
     private lateinit var notificationTempSharedPreferences: SharedPreferences
-    lateinit var job: Job
-
+    private lateinit var windSpeedSharedPreferences: SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModelFactory =
@@ -92,6 +91,8 @@ class HomeFragment : Fragment() {
             Constants.LANGUAGE_SHARED_PREFS,
             Context.MODE_PRIVATE
         )
+
+        windSpeedSharedPreferences = requireActivity().getSharedPreferences(Constants.WIND_SPEED_SHARED_PREFS, Context.MODE_PRIVATE)
         mapsOrGpsSharedPreferences = requireActivity().getSharedPreferences(
             Constants.MAP_OR_GPS_SHARED_PREFS,
             Context.MODE_PRIVATE
@@ -690,6 +691,11 @@ class HomeFragment : Fragment() {
 
 
     private fun updateCurrentWeatherUi(weatherResponse: WeatherResponse) {
+       val windUnit = windSpeedSharedPreferences.getString(Constants.WIND_SPEED_SHARED_PREFS_KEY, "meter")
+        val windSpeed = when(windUnit){
+            "meter" -> "${weatherResponse.wind?.speed} m/s"
+            else -> String.format("%.2f", (weatherResponse.wind?.speed)?.times(2.236936)) + " M/h"
+        }
         if (language == "ar") {
             binding.weatherTemp.text =
                 NumberConverter.convertToArabicNumerals("${weatherResponse.main?.temp?.toInt()} ${tempUnit.symbol}")
@@ -700,7 +706,7 @@ class HomeFragment : Fragment() {
             binding.humidityValue.text =
                 NumberConverter.convertToArabicNumerals(weatherResponse.main?.humidity.toString() + " %")
             binding.windValue.text =
-                NumberConverter.convertToArabicNumerals(weatherResponse.wind?.speed.toString() + " m/s")
+                NumberConverter.convertToArabicNumerals(windSpeed)
             binding.cloudValue.text =
                 NumberConverter.convertToArabicNumerals(weatherResponse.clouds?.all.toString() + " %")
             binding.seaLevelValue.text =
@@ -713,7 +719,7 @@ class HomeFragment : Fragment() {
             binding.ivIcon.setImageResource(getWeatherIcon(weatherResponse.weather?.get(0)?.icon!!))
             binding.pressureValue.text = weatherResponse.main?.pressure.toString() + " hpa"
             binding.humidityValue.text = weatherResponse.main?.humidity.toString() + " %"
-            binding.windValue.text = weatherResponse.wind?.speed.toString() + " m/s"
+            binding.windValue.text = windSpeed
             binding.cloudValue.text = weatherResponse.clouds?.all.toString() + " %"
             binding.seaLevelValue.text = weatherResponse.main?.seaLevel.toString() + " pa"
             binding.visibleValue.text = weatherResponse.visibility.toString() + " m"
