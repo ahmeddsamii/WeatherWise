@@ -143,7 +143,7 @@ class AlertFragment : Fragment(), OnDeleteAlert {
             },
             hour,
             minute,
-            false // Use 24-hour format
+            false
         )
 
         timePickerDialog.show()
