@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -22,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weatherwise.AlarmReceiver
 import com.example.weatherwise.databinding.FragmentAlertBinding
 import com.example.weatherwise.model.AlertDto
+import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.ui.alert.viewModel.AlertViewModel
 import com.example.weatherwise.ui.alert.viewModel.AlertViewModelFactory
 import com.example.weatherwise.ui.home.viewModel.HomeViewModel
@@ -182,9 +184,21 @@ class AlertFragment : Fragment(), OnDeleteAlert {
     }
 
     override fun onClick(alertDto: AlertDto) {
-        alertViewModel.deleteAlert(alertDto)
-        alarmManager.cancel(pendingIntent)
-        pendingIntent.cancel()
+       showConfirmationDialog(alertDto)
+    }
+
+
+    private fun showConfirmationDialog(alertDto: AlertDto) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Deletion")
+            .setMessage("Are you sure you want to remove this alert?")
+            .setPositiveButton("Yes") { _, _ ->
+                alertViewModel.deleteAlert(alertDto)
+                alarmManager.cancel(pendingIntent)
+                pendingIntent.cancel()
+            }
+            .setNegativeButton("No", null)
+            .show()
     }
 
 
