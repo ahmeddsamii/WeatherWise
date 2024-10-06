@@ -2,7 +2,7 @@ package com.example.weatherwise
 object Constants{
     val LOCATION_REQUEST_CODE = 1001
     const val BASE_URL =  "https://api.openweathermap.org/data/2.5/"
-    const val API_KEY = "e9556a170d2136f283a92527fbc67b3d"
+    const val API_KEY = "adb5f9b065df229b523bbc9ef5b27f49"
     const val LANGUAGE_SHARED_PREFS = "language sharedPrefs"
     const val LANGUAGE_KEY_SHARED_PREFERENCE = "language"
     const val COME_FROM_MAP_PREFS = "map activity"
@@ -25,6 +25,8 @@ object Constants{
     const val OFFLINE_LOCATION_SHARED_PREFS_KEY = "OFFLINE_LOCATION_SHARED_PREFS_KEY"
     const val NOTIFICATION_SHARED_PREFS = "notification_shared_prefs"
     const val NOTIFICATION_SHARED_PREFS_KEY = "notification_shared_prefs_key"
+    const val NOTIFICATION_ADDRESS_SHARED_PREFS = "notification_address_shared_prefs"
+    const val NOTIFICATION_ADDRESS_SHARED_PREFS_KEY = "notification_address_shared_prefs_key"
 }
 
 
