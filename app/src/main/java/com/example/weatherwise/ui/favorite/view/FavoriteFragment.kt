@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -96,12 +97,23 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
     }
 
     override fun onClick(favoritePlace: FavoritePlace) {
-        favoriteViewModel.removeFavoritePlace(favoritePlace)
+        showConfirmationDialog(favoritePlace)
     }
 
     override fun onCardClick(favoritePlace: FavoritePlace) {
         comingFromFavoriteSharedPreferences.edit().putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY,"true").apply()
         val action = FavoriteFragmentDirections.actionNavFavoriteToNavHome(favoritePlace.latitude.toFloat(), favoritePlace.longitude.toFloat())
         Navigation.findNavController(requireView()).navigate(action)
+    }
+
+    private fun showConfirmationDialog(favoritePlace: FavoritePlace) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirm Deletion")
+            .setMessage("Are you sure you want to remove this favorite place?")
+            .setPositiveButton("Yes") { _, _ ->
+                favoriteViewModel.removeFavoritePlace(favoritePlace)
+            }
+            .setNegativeButton("No", null)
+            .show()
     }
 }
