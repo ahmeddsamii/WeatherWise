@@ -19,7 +19,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -29,9 +28,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.transition.Visibility
 import com.example.weatherwise.uiState.UiState
 import com.example.weatherwise.Constants
 import com.example.weatherwise.R
@@ -41,6 +38,7 @@ import com.example.weatherwise.helpers.NumberConverter
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.ListElement
 import com.example.weatherwise.model.TempUnit
+import com.example.weatherwise.model.WeatherForecastResponse
 import com.example.weatherwise.ui.home.viewModel.CurrentWeatherViewModelFactory
 import com.example.weatherwise.ui.home.viewModel.HomeViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -51,11 +49,15 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
-import java.time.Duration
+import java.io.FileOutputStream
+import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -77,12 +79,15 @@ class HomeFragment : Fragment() {
     lateinit var offlineLocationSharedPreferences: SharedPreferences
     private var language: String? = null
     lateinit var tempUnit: TempUnit
+    private lateinit var notificationTempSharedPreferences: SharedPreferences
+    lateinit var job: Job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModelFactory =
             CurrentWeatherViewModelFactory(WeatherRepository.getInstance(requireContext()))
         homeViewModel = ViewModelProvider(this, viewModelFactory).get(HomeViewModel::class.java)
+        notificationTempSharedPreferences = requireActivity().getSharedPreferences(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS, Context.MODE_PRIVATE)
         sharedPreferences = requireActivity().getSharedPreferences(
             Constants.LANGUAGE_SHARED_PREFS,
             Context.MODE_PRIVATE
@@ -179,31 +184,23 @@ class HomeFragment : Fragment() {
                     .putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
                 mapsOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"not_map").apply()
                 if (NetworkUtil.isInternetAvailable(requireContext())) {
-                    binding.disablePermissionCardView.visibility = View.GONE
-                    binding.disablePermissionConstraint.visibility = View.GONE
-                    binding.textView2.visibility = View.GONE
-                    binding.textView3.visibility = View.GONE
-                    binding.btnAllow.visibility = View.GONE
-                    if (checkSelfPermission()) {
-                        if (isLocationEnabled()) {
-                            getLocation()
+                    Toast.makeText(requireContext(), "internet is available", Toast.LENGTH_SHORT).show()
+                    if (NetworkUtil.isInternetAvailable(requireContext())){
+                        if (checkSelfPermission()) {
+                            if (isLocationEnabled()) {
+                                getLocation()
+                            } else {
+                                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                startActivity(intent)
+                            }
                         } else {
-                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                            startActivity(intent)
+                            requestPermission()
                         }
-                    } else {
-                        requestPermission()
                     }
-                } else {
-//                    lifecycleScope.launch (Dis){  }
-//                    makeUiVisible()
-//                    val file = File(requireContext().cacheDir,"currentWeather")
-//                    val fis = FileInputStream(file)
-//                    val resultString = fis.readBytes().decodeToString()
-//                    val currentWeather = Gson().fromJson(resultString,WeatherResponse::class.java)
-//                    updateCurrentWeatherUi(currentWeather)
-//                    Snackbar.make(requireView(), "there is no connection", 2000).show()
-
+                }else if(!NetworkUtil.isInternetAvailable(requireContext())){
+                    readCurrentWeatherCache()
+                    readHoursListCache()
+                    readDayListCache()
                 }
 
             }
@@ -264,6 +261,7 @@ class HomeFragment : Fragment() {
                         is UiState.Failure -> ""
                         is UiState.Success<*> -> {
                             val hoursList = responseState.data as List<ListElement>
+                            writeHoursListToCache(hoursList)
                             if (isAdded) {
                                 val adapter = HoursAdapter()
                                 binding.hoursRecyclerView.apply {
@@ -297,7 +295,7 @@ class HomeFragment : Fragment() {
                                 binding.progressbar.visibility = View.GONE
                                 binding.tvDate.visibility = View.GONE
                                 binding.tvCountryName.visibility = View.GONE
-                                binding.disablePermissionCardView.visibility = View.GONE
+//                                binding.disablePermissionCardView.visibility = View.GONE
                             }
                         }
 
@@ -309,31 +307,37 @@ class HomeFragment : Fragment() {
                             binding.progressbar.visibility = View.GONE
                             binding.tvDate.visibility = View.VISIBLE
                             binding.tvCountryName.visibility = View.VISIBLE
-                            binding.disablePermissionCardView.visibility = View.GONE
-                            binding.disablePermissionCardView.visibility = View.GONE
+//                            binding.disablePermissionCardView.visibility = View.GONE
+//                            binding.disablePermissionCardView.visibility = View.GONE
                             binding.disablePermissionConstraint.visibility = View.GONE
                             binding.textView2.visibility = View.GONE
                             binding.textView3.visibility = View.GONE
                             binding.btnAllow.visibility = View.GONE
                             val it = response.data as WeatherResponse
-                            Log.i("TAG", "response is: $it")
                             updateCurrentWeatherUi(it)
+                            writeCurrentWeatherToCache(it)
+                            notificationTempSharedPreferences.edit().putString(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS_KEY, "${it.main?.temp?.toInt()!!} ${tempUnit.symbol}").apply()
+                            withContext(Dispatchers.Main){
+                                binding.cardView.visibility = View.VISIBLE
+                                binding.daysRecyclerView.visibility = View.VISIBLE
+                                binding.hoursRecyclerView.visibility = View.VISIBLE
+                                binding.lastItemCardView.visibility = View.VISIBLE
+                            }
+
                         }
 
-                        else -> {
-                            binding.cardView.visibility = View.GONE
-                            binding.daysRecyclerView.visibility = View.GONE
-                            binding.hoursRecyclerView.visibility = View.GONE
-                            binding.lastItemCardView.visibility = View.GONE
+                        is UiState.Loading -> {
                             binding.progressbar.visibility = View.VISIBLE
                             binding.tvDate.visibility = View.GONE
                             binding.tvCountryName.visibility = View.GONE
-                            binding.disablePermissionCardView.visibility = View.GONE
+//                            binding.disablePermissionCardView.visibility = View.GONE
                         }
                     }
                 }
             }
         }
+
+
 
 
 
@@ -351,7 +355,9 @@ class HomeFragment : Fragment() {
                     )
                 )
 
+
                 Log.i("TAG", "onViewCreated: MAX TEMP $maxTemp")
+                writeDayListToCache(dayItemList)
 
                 val adapter = DaysAdapter()
                 binding.daysRecyclerView.apply {
@@ -367,6 +373,117 @@ class HomeFragment : Fragment() {
 
     }
 
+    private fun writeCurrentWeatherToCache(weatherResponse: WeatherResponse){
+        lifecycleScope.launch(Dispatchers.IO) {
+            val resultAsString = Gson().toJson(weatherResponse)
+            val file = File(requireContext().cacheDir, "currentWeather")
+            val fos = FileOutputStream(file)
+            fos.write(resultAsString.toByteArray(Charset.defaultCharset()))
+        }
+    }
+
+    private fun writeHoursListToCache(hoursList: List<ListElement>) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val resultAsString = Gson().toJson(hoursList)
+                val file = File(requireContext().cacheDir, "hoursList")
+                FileOutputStream(file).use { fos ->
+                    fos.write(resultAsString.toByteArray(Charset.defaultCharset()))
+                }
+            } catch (e: Exception) {
+                Log.e("CacheError", "Error writing hours list to cache", e)
+            }
+        }
+    }
+
+    private fun readHoursListCache(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            binding.progressbar.visibility = View.GONE
+            val file = File(requireContext().cacheDir,"hoursList")
+            if (file.exists()){
+                val fis = FileInputStream(file)
+                val resultString = fis.readBytes().decodeToString()
+                val hoursList: List<ListElement> = Gson().fromJson<List<ListElement>?>(resultString, object : TypeToken<List<ListElement>>() {}.type).map {
+                        element ->
+                    // Make your changes to each ListElement here
+                    element.copy(
+                        dtTxt = element.dtTxt.substring(10, element.dtTxt.lastIndex)
+                    )
+                }
+                withContext(Dispatchers.Main){
+                    showHoursListOnUi(hoursList)
+                }
+            }else{
+                Snackbar.make(requireView(),"no cached file for hours list",2000).show()
+            }
+        }
+    }
+
+    private fun writeDayListToCache(dayList: List<DailyWeather>) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val resultAsString = Gson().toJson(dayList)
+                val file = File(requireContext().cacheDir, "dayList")
+                FileOutputStream(file).use { fos ->
+                    fos.write(resultAsString.toByteArray(Charset.defaultCharset()))
+                }
+            } catch (e: Exception) {
+                Log.e("CacheError", "Error writing hours dayList to cache", e)
+            }
+        }
+    }
+
+    private fun readDayListCache(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            binding.progressbar.visibility = View.GONE
+            val file = File(requireContext().cacheDir,"dayList")
+            if (file.exists()){
+                val fis = FileInputStream(file)
+                val resultString = fis.readBytes().decodeToString()
+                val dayList: List<DailyWeather> = Gson().fromJson<List<DailyWeather>?>(resultString, object : TypeToken<List<DailyWeather>>() {}.type)
+                withContext(Dispatchers.Main){
+                    showDaysListOnUi(dayList)
+                }
+            }else{
+                Snackbar.make(requireView(),"no cached file for hours list",2000).show()
+            }
+        }
+    }
+
+    private fun showDaysListOnUi(dayList:List<DailyWeather>){
+        val adapter = DaysAdapter()
+        binding.daysRecyclerView.apply {
+            this.adapter = adapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+        adapter.submitList(dayList)
+    }
+
+
+    private fun showHoursListOnUi(hoursList:List<ListElement>){
+        val adapter = HoursAdapter()
+        binding.hoursRecyclerView.apply {
+            this.adapter = adapter
+            layoutManager = LinearLayoutManager(requireContext(),LinearLayoutManager.HORIZONTAL, false)
+        }
+        adapter.submitList(hoursList)
+
+    }
+
+    private fun readCurrentWeatherCache(){
+        binding.progressbar.visibility = View.GONE
+        Snackbar.make(requireView(),"no internet, trying to load cached weather",2000).show()
+        val file = File(requireContext().cacheDir,"currentWeather")
+        if (file.exists()){
+            val fis = FileInputStream(file)
+            val resultString = fis.readBytes().decodeToString()
+            val currentWeatherObj = Gson().fromJson(resultString,WeatherResponse::class.java)
+            updateCurrentWeatherUi(currentWeatherObj)
+        }else{
+            Snackbar.make(requireView(),"no cached file",2000).show()
+        }
+
+    }
     private fun checkSelfPermission(): Boolean {
         val result = ContextCompat.checkSelfPermission(
             requireContext(),
@@ -397,10 +514,10 @@ class HomeFragment : Fragment() {
                 super.onLocationResult(p0)
                 val latitude = p0.lastLocation?.latitude!!
                 val longitude = p0.lastLocation?.longitude!!
-                offlineLocationSharedPreferences.edit()
-                    .putFloat(Constants.OFFLINE_LATITUDE, latitude.toFloat()).apply()
-                offlineLocationSharedPreferences.edit()
-                    .putFloat(Constants.OFFLINE_LONGITUDE, longitude.toFloat()).apply()
+//                offlineLocationSharedPreferences.edit()
+//                    .putFloat(Constants.OFFLINE_LATITUDE, latitude.toFloat()).apply()
+//                offlineLocationSharedPreferences.edit()
+//                    .putFloat(Constants.OFFLINE_LONGITUDE, longitude.toFloat()).apply()
 
 
                 val locale = Locale(language ?: "en")
@@ -410,7 +527,8 @@ class HomeFragment : Fragment() {
                     p0.lastLocation?.longitude!!,
                     1
                 )
-                binding.tvCountryName.text = "${x?.get(0)!!.countryName}, ${x?.get(0)!!.adminArea}"
+                val address = "${x?.get(0)!!.countryName}, ${x?.get(0)!!.adminArea}"
+                binding.tvCountryName.text = address
 
 
                 lifecycleScope.launch {
@@ -471,7 +589,8 @@ class HomeFragment : Fragment() {
                     binding.progressbar.visibility = View.VISIBLE
                     getLocation()
                 }else{
-                    showLocationSettingsDialog()
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    startActivity(intent)
                 }
 
             } else if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED){
@@ -481,6 +600,8 @@ class HomeFragment : Fragment() {
                 binding.textView3.visibility = View.VISIBLE
                 binding.btnAllow.visibility = View.VISIBLE
                 binding.progressbar.visibility = View.GONE
+                binding.cardView.visibility = View.GONE
+                binding.lastItemCardView.visibility = View.GONE
             }
         }
     }
@@ -506,32 +627,6 @@ class HomeFragment : Fragment() {
 //            }
 //        }
 //    }
-
-    fun showDisablePermissionUI() {
-        binding.disablePermissionCardView.visibility = View.VISIBLE
-        binding.disablePermissionConstraint.visibility = View.VISIBLE
-        binding.tvDate.visibility = View.GONE
-        binding.progressbar.visibility = View.GONE
-        binding.tvCountryName.visibility = View.GONE
-        binding.hoursRecyclerView.visibility = View.GONE
-        binding.cardView.visibility = View.GONE
-        binding.daysRecyclerView.visibility = View.GONE
-        binding.lastItemCardView.visibility = View.GONE
-    }
-
-    private fun showLocationSettingsDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Location Services Not Enabled")
-            .setMessage("Please enable location services to use this feature.")
-            .setPositiveButton("Open Settings") { _, _ ->
-                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-            }
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-                showDisablePermissionUI()
-            }
-            .show()
-    }
 
     private fun applyGradientToCard() {
         val startColor = ContextCompat.getColor(requireContext(), R.color.DarkBlue)
@@ -592,23 +687,6 @@ class HomeFragment : Fragment() {
         return newList
     }
 
-
-    fun changeLanguage(context: Context, languageCode: String? = null): Locale {
-        if (languageCode != null) {
-            // Set new language
-            val localeList = LocaleListCompat.forLanguageTags(languageCode)
-            AppCompatDelegate.setApplicationLocales(localeList)
-        }
-
-        // Get current or newly set locale
-        val currentLocaleList = AppCompatDelegate.getApplicationLocales()
-        return if (!currentLocaleList.isEmpty) {
-            currentLocaleList[0]!!
-        } else {
-            // Fallback to system locale if the app hasn't set a locale
-            context.resources.configuration.locales[0]
-        }
-    }
 
 
     private fun updateCurrentWeatherUi(weatherResponse: WeatherResponse) {
