@@ -1,5 +1,6 @@
 package com.example.weatherwise
 
+import WeatherResponse
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -14,9 +15,9 @@ import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-
 class AlarmReceiver : BroadcastReceiver() {
     private lateinit var notificationSharedPreferences: SharedPreferences
+    private lateinit var notificationTempSharedPreferences: SharedPreferences
 
     companion object {
         const val CHANNEL_ID = "WeatherAlertChannel"
@@ -26,7 +27,9 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        notificationSharedPreferences = context.getSharedPreferences(Constants.NOTIFICATION_SHARED_PREFS,Context.MODE_PRIVATE)
+        notificationSharedPreferences =
+            context.getSharedPreferences(Constants.NOTIFICATION_SHARED_PREFS, Context.MODE_PRIVATE)
+        notificationTempSharedPreferences = context.getSharedPreferences(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS,Context.MODE_PRIVATE)
         when (intent.action) {
             ACTION_DISMISS -> dismissAlert(context)
             else -> showNotification(context)
@@ -43,27 +46,39 @@ class AlarmReceiver : BroadcastReceiver() {
             action = ACTION_DISMISS
         }
         val dismissPendingIntent = PendingIntent.getBroadcast(
-            context, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context,
+            0,
+            dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val temp = notificationTempSharedPreferences.getString(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS_KEY,"null")
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.mist)
             .setContentTitle("Weather Alert")
-            .setContentText("The weather is fine")
+            .setContentText("The temperature is $temp in your area")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Dismiss",
+                dismissPendingIntent
+            )
             .setAutoCancel(true)
             .setSound(null)  // Disable notification sound
 
-        val notificationManager = ContextCompat.getSystemService(context, NotificationManager::class.java)
+        val notificationManager =
+            ContextCompat.getSystemService(context, NotificationManager::class.java)
         notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
 
 
-        val notificationOrAlarm = notificationSharedPreferences.getString(Constants.NOTIFICATION_SHARED_PREFS_KEY, "alarm")
+        val notificationOrAlarm = notificationSharedPreferences.getString(
+            Constants.NOTIFICATION_SHARED_PREFS_KEY,
+            "alarm"
+        )
 
-        if (notificationOrAlarm == "alarm"){
+        if (notificationOrAlarm == "alarm") {
             // Play the sound manually
             playSound(context, soundUri)
         }
@@ -88,7 +103,8 @@ class AlarmReceiver : BroadcastReceiver() {
         ringtone?.stop()
 
         // Cancel the notification
-        val notificationManager = ContextCompat.getSystemService(context, NotificationManager::class.java)
+        val notificationManager =
+            ContextCompat.getSystemService(context, NotificationManager::class.java)
         notificationManager?.cancel(NOTIFICATION_ID)
     }
 
