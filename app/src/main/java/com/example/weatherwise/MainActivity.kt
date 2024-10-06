@@ -14,7 +14,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import com.example.weatherwise.databinding.ActivityMainBinding
-import com.example.weatherwise.ui.home.view.HomeFragment
 
 class MainActivity : AppCompatActivity() {
 
