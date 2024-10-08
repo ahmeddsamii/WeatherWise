@@ -33,12 +33,17 @@ import com.example.weatherwise.uiState.UiState
 import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentHomeBinding
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
 import com.example.weatherwise.helpers.NetworkUtil
 import com.example.weatherwise.helpers.NumberConverter
 import com.example.weatherwise.model.DailyWeather
 import com.example.weatherwise.model.ListElement
 import com.example.weatherwise.model.TempUnit
-import com.example.weatherwise.model.WeatherForecastResponse
+import com.example.weatherwise.network.api.RetrofitHelper
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import com.example.weatherwise.ui.home.viewModel.CurrentWeatherViewModelFactory
 import com.example.weatherwise.ui.home.viewModel.HomeViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -51,7 +56,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -84,7 +88,13 @@ class HomeFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModelFactory =
-            CurrentWeatherViewModelFactory(WeatherRepository.getInstance(requireContext()))
+            CurrentWeatherViewModelFactory(
+                WeatherRepository.getInstance(
+                    WeatherRemoteDataSource(RetrofitHelper),
+                    PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()),
+                    AlertLocalDataSource(AlertDatabaseBuilder.getInstance(requireContext()).alertDao())
+                )
+            )
         homeViewModel = ViewModelProvider(this, viewModelFactory).get(HomeViewModel::class.java)
         notificationTempSharedPreferences = requireActivity().getSharedPreferences(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS, Context.MODE_PRIVATE)
         sharedPreferences = requireActivity().getSharedPreferences(
