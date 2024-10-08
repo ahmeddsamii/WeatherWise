@@ -25,11 +25,8 @@ class WeatherRepository private constructor(val retrofit: RetrofitHelper,val pla
 
     suspend fun getCurrentWeather(lat: Double, long: Double, apiKey: String, unit: String, lang: String): Flow<WeatherResponse> {
         return flow {
-            while (true){
                 val response = retrofit.apiService.getCurrentWeather(lat, long, apiKey, unit, lang)
                 emit(response)
-                delay(200)
-            }
         }
     }
 
