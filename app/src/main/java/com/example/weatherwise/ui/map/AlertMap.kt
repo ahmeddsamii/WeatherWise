@@ -1,13 +1,21 @@
-// AlertMap.kt
 package com.example.weatherwise.ui.map
 
+import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.work.*
 import com.example.weatherwise.R
@@ -19,10 +27,14 @@ import com.example.weatherwise.ui.alert.viewModel.AlertViewModelFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
 import java.util.*
 import java.util.concurrent.TimeUnit
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 
 class AlertMap : Fragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentAlertMapBinding
@@ -95,11 +107,24 @@ class AlertMap : Fragment(), OnMapReadyCallback {
                 if (selectedDate.timeInMillis <= System.currentTimeMillis()) {
                     Snackbar.make(requireView(), "Please select a future time", Snackbar.LENGTH_LONG).show()
                 } else {
-                    scheduleAlarm(selectedDate)
+                    checkAndRequestPermissions(selectedDate)
                 }
             },
             hour, minute, false
         ).show()
+    }
+
+    private fun checkAndRequestPermissions(selectedDateTime: Calendar) {
+        if (!hasNotificationPermission()) {
+            showNotificationPermissionDialog()
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(requireContext())) {
+            requestOverlayPermission()
+        } else {
+            scheduleAlarm(selectedDateTime)
+        }
     }
 
     private fun scheduleAlarm(selectedDateTime: Calendar) {
@@ -111,7 +136,7 @@ class AlertMap : Fragment(), OnMapReadyCallback {
                 "latitude" to latitude,
                 "longitude" to longitude
             ))
-            .addTag("weatherAlert_${System.currentTimeMillis()}")  // Add a unique tag
+            .addTag("weatherAlert_${System.currentTimeMillis()}")
             .build()
 
         WorkManager.getInstance(requireContext()).enqueue(weatherAlertRequest)
@@ -119,6 +144,88 @@ class AlertMap : Fragment(), OnMapReadyCallback {
         alertViewModel.addAlert(AlertDto(start = selectedDateTime.timeInMillis, id = weatherAlertRequest.id.toString()))
         Snackbar.make(requireView(), "Alert set successfully", Snackbar.LENGTH_LONG).show()
         parentFragmentManager.popBackStack()
+    }
+
+    private fun requestOverlayPermission() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permission Required")
+            .setMessage("To ensure the alert works properly, please allow WeatherWise to display over other apps.")
+            .setPositiveButton("Go to Settings") { _, _ ->
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:${requireContext().packageName}")
+                )
+                overlayPermissionLauncher.launch(intent)
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private val overlayPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(requireContext())) {
+            scheduleAlarm(Calendar.getInstance().apply {
+                timeInMillis = System.currentTimeMillis() + 60000 // Schedule 1 minute from now as an example
+            })
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "Permission denied. The alert may not work as expected.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun showNotificationPermissionDialog() {
+        val alertDialogBuilder = AlertDialog.Builder(requireActivity())
+            .setTitle("Permission Required")
+            .setMessage("Allow display over apps")
+            .setPositiveButton("Accept") { dialog: DialogInterface, _: Int ->
+                openAppSettings()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Dismiss") { dialog: DialogInterface, _: Int ->
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+
+        val dialog = alertDialogBuilder.create()
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+            positiveButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.primaryColor))
+            negativeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
+
+            positiveButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            negativeButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.setMargins(0, 0, 16, 0)
+            negativeButton.layoutParams = params
+        }
+        dialog.show()
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        val uri = Uri.fromParts("package", requireActivity().packageName, null)
+        intent.data = uri
+        startActivity(intent)
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // For versions below Tiramisu, permissions are not required
+        }
     }
 
     private fun initializeViewModel() {
@@ -131,7 +238,3 @@ class AlertMap : Fragment(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
     }
 }
-
-
-
-
