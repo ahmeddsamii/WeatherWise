@@ -17,5 +17,5 @@ interface PlacesDao {
     suspend fun deletePlace(favoritePlace: FavoritePlace):Int
 
     @Query("SELECT * FROM FavoritePlace")
-    fun getAllLocalPlaces():Flow<List<FavoritePlace>>
+    fun getAllLocalPlaces():List<FavoritePlace>
 }
