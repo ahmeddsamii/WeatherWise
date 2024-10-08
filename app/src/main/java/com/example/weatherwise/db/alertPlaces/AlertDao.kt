@@ -16,5 +16,5 @@ interface AlertDao {
     suspend fun deleteAlert(alertDto: AlertDto):Int
 
     @Query("SELECT * FROM AlertTable ")
-    fun getAlertsByStartDate(): Flow<List<AlertDto>>
+    fun getAlertsByStartDate(): List<AlertDto>
 }
