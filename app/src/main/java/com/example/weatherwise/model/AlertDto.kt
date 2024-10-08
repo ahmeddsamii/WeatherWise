@@ -8,6 +8,7 @@ import java.util.UUID
 data class AlertDto(
     @PrimaryKey var id: String = UUID.randomUUID().toString(),
     val start: Long,
+    val workerId: String?=null
 )
 
 
