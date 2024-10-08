@@ -6,16 +6,16 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.weatherwise.model.AlertDto
 
-@Database(entities = [AlertDto::class], version = 3)
-abstract class AlertLocalDatabase:RoomDatabase() {
+@Database(entities = [AlertDto::class], version = 5)
+abstract class AlertDatabaseBuilder:RoomDatabase() {
 
     abstract fun alertDao():AlertDao
 
     companion object{
-        private var INSTANCE: AlertLocalDatabase? = null
-        fun getInstance(context: Context):AlertLocalDatabase{
+        private var INSTANCE: AlertDatabaseBuilder? = null
+        fun getInstance(context: Context):AlertDatabaseBuilder{
             return INSTANCE?: synchronized(this){
-                val instance = Room.databaseBuilder(context,AlertLocalDatabase::class.java, "alertDB")
+                val instance = Room.databaseBuilder(context,AlertDatabaseBuilder::class.java, "alertDB")
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
@@ -23,4 +23,7 @@ abstract class AlertLocalDatabase:RoomDatabase() {
             }
         }
     }
+
+
+
 }
