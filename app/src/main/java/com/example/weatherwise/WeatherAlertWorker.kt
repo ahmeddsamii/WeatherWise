@@ -17,6 +17,12 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
+import com.example.weatherwise.network.api.RetrofitHelper
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -37,7 +43,10 @@ class WeatherAlertWorker(
         val latitude = inputData.getFloat("latitude", 0f)
         val longitude = inputData.getFloat("longitude", 0f)
 
-        val repository = WeatherRepository.getInstance(context)
+        val repository = WeatherRepository.getInstance(
+            WeatherRemoteDataSource(RetrofitHelper),
+            PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(context).placesDao()),
+            AlertLocalDataSource(AlertDatabaseBuilder.getInstance(context).alertDao()))
 
         try {
             val weatherData = repository.getCurrentWeather(
