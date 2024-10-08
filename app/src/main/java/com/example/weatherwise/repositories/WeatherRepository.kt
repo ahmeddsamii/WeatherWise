@@ -1,21 +1,26 @@
-import android.content.Context
-import com.example.weatherwise.db.alertPlaces.AlertLocalDatabase
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.alertPlaces.IAlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.IPlacesLocalDataSource
 import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
 import com.example.weatherwise.model.AlertDto
 import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.model.WeatherForecastResponse
+import com.example.weatherwise.network.api.IWeatherRemoteDataSource
 import com.example.weatherwise.network.api.RetrofitHelper
-import kotlinx.coroutines.delay
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
+import com.example.weatherwise.repositories.IWeatherRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class WeatherRepository private constructor(val retrofit: RetrofitHelper,val placesLocalDataSource: PlacesLocalDataSource, val alertLocalDatabase: AlertLocalDatabase) {
+class WeatherRepository private constructor(val weatherRemoteDataSource: IWeatherRemoteDataSource, val localDataSource: IPlacesLocalDataSource, val alertLocalDataSource: IAlertLocalDataSource) :
+    IWeatherRepository {
 
    companion object{
        private var INSTANCE: WeatherRepository? = null
-       fun getInstance(context: Context):WeatherRepository{
+       fun getInstance(weatherRemoteDataSource: IWeatherRemoteDataSource, localDataSource: IPlacesLocalDataSource, alertLocalDataSource: IAlertLocalDataSource):WeatherRepository{
            return INSTANCE?: synchronized(this){
-               val instance = WeatherRepository(RetrofitHelper, PlacesLocalDataSource.getInstance(context), AlertLocalDatabase.getInstance(context))
+               val instance = WeatherRepository(weatherRemoteDataSource,localDataSource, alertLocalDataSource)
                 INSTANCE=instance
                instance
            }
@@ -23,54 +28,57 @@ class WeatherRepository private constructor(val retrofit: RetrofitHelper,val pla
    }
 
 
-    suspend fun getCurrentWeather(lat: Double, long: Double, apiKey: String, unit: String, lang: String): Flow<WeatherResponse> {
+    override suspend fun getCurrentWeather(lat: Double, long: Double, apiKey: String, unit: String, lang: String): Flow<WeatherResponse> {
         return flow {
-                val response = retrofit.apiService.getCurrentWeather(lat, long, apiKey, unit, lang)
-                emit(response)
+            emit(weatherRemoteDataSource.getCurrentWeather(lat,long,apiKey,unit,lang))
         }
     }
 
-    suspend fun getWeatherForecast(lat:Double, long:Double, apiKey:String,unit:String,lang:String): Flow<WeatherForecastResponse>{
+    override suspend fun getWeatherForecast(lat:Double, long:Double, apiKey:String, unit:String, lang:String): Flow<WeatherForecastResponse>{
         return flow {
-            emit(retrofit.apiService.getWeatherForecast(lat,long,apiKey,unit,lang))
-        }
-    }
-
-
-    suspend fun addPlace(place: FavoritePlace):Flow<Long>{
-        return flow {
-            emit( placesLocalDataSource.PlacesDao().addPlace(place))
-        }
-
-    }
-
-    suspend fun removePlace(place: FavoritePlace):Flow<Int>{
-        return flow {
-            emit(placesLocalDataSource.PlacesDao().deletePlace(place))
-        }
-
-    }
-
-    fun getAllLocalFavoritePlaces():Flow<List<FavoritePlace>>{
-        return placesLocalDataSource.PlacesDao().getAllLocalPlaces()
-    }
-
-
-    fun addAlert(alertDto: AlertDto):Flow<Long>{
-        return flow {
-            emit(alertLocalDatabase.alertDao().insertAlert(alertDto))
+            emit(weatherRemoteDataSource.getWeatherForecast(lat,long,apiKey,unit,lang))
         }
     }
 
 
-    fun deleteAlert(alertDto: AlertDto):Flow<Int>{
+    override suspend fun addPlace(place: FavoritePlace):Flow<Long>{
         return flow {
-            emit(alertLocalDatabase.alertDao().deleteAlert(alertDto))
+            emit( localDataSource.addPlace(place))
+        }
+
+    }
+
+    override suspend fun removePlace(place: FavoritePlace):Flow<Int>{
+        return flow {
+            emit(localDataSource.removePlace(place))
+        }
+
+    }
+
+    override fun getAllLocalFavoritePlaces():Flow<List<FavoritePlace>>{
+        return flow {
+           emit(localDataSource.getAllLocalFavoritePlaces())
         }
     }
 
 
-    fun getLocalAlertsByDate():Flow<List<AlertDto>>{
-        return alertLocalDatabase.alertDao().getAlertsByStartDate()
+    override fun addAlert(alertDto: AlertDto):Flow<Long>{
+        return flow {
+            emit(alertLocalDataSource.addAlert(alertDto))
+        }
+    }
+
+
+    override fun deleteAlert(alertDto: AlertDto):Flow<Int>{
+        return flow {
+            emit(alertLocalDataSource.deleteAlert(alertDto))
+        }
+    }
+
+
+    override fun getLocalAlertsByDate():Flow<List<AlertDto>>{
+        return flow {
+            emit(alertLocalDataSource.getLocalAlertsByDate())
+        }
     }
 }
