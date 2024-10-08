@@ -27,7 +27,6 @@ import com.example.weatherwise.ui.alert.viewModel.AlertViewModelFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
 import java.util.*
@@ -35,6 +34,12 @@ import java.util.concurrent.TimeUnit
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
+import com.example.weatherwise.network.api.RetrofitHelper
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
 
 class AlertMap : Fragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentAlertMapBinding
@@ -229,7 +234,12 @@ class AlertMap : Fragment(), OnMapReadyCallback {
     }
 
     private fun initializeViewModel() {
-        val factory = AlertViewModelFactory(WeatherRepository.getInstance(requireContext()))
+        val factory = AlertViewModelFactory(WeatherRepository.getInstance(
+            WeatherRemoteDataSource(RetrofitHelper),
+            PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()),
+            AlertLocalDataSource(AlertDatabaseBuilder.getInstance(requireContext()).alertDao())
+        )
+        )
         alertViewModel = ViewModelProvider(this, factory)[AlertViewModel::class.java]
     }
 
