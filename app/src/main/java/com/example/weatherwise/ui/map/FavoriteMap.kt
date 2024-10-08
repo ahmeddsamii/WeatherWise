@@ -1,7 +1,5 @@
 package com.example.weatherwise.ui.map
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.location.Geocoder
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -10,11 +8,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.example.weatherwise.Constants
 import com.example.weatherwise.R
 import com.example.weatherwise.databinding.BottomSheetDialogBinding
 import com.example.weatherwise.databinding.FragmentFavoriteMapBinding
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
 import com.example.weatherwise.model.FavoritePlace
+import com.example.weatherwise.network.api.RetrofitHelper
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModel
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModelFactory
 import com.google.android.gms.maps.GoogleMap
@@ -54,7 +57,12 @@ class FavoriteMap : Fragment(),OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
         val mapFragment = childFragmentManager.findFragmentById(R.id.favorite_map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-        factory = FavoriteViewModelFactory(WeatherRepository.getInstance(requireContext()))
+        factory = FavoriteViewModelFactory(WeatherRepository.getInstance(
+            WeatherRemoteDataSource(RetrofitHelper),
+            PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()),
+            AlertLocalDataSource(AlertDatabaseBuilder.getInstance(requireContext()).alertDao())
+        )
+        )
         favoriteViewModel = ViewModelProvider(this, factory).get(FavoriteViewModel::class.java)
     }
 
