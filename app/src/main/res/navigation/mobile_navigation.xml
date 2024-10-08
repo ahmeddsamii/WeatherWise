@@ -35,7 +35,17 @@
         android:id="@+id/nav_alert"
         android:name="com.example.weatherwise.ui.alert.view.AlertFragment"
         android:label="@string/menu_alert"
-        tools:layout="@layout/fragment_alert" />
+        tools:layout="@layout/fragment_alert" >
+        <action
+            android:id="@+id/action_nav_alert_to_alertMap"
+            app:destination="@id/alertMap" />
+        <argument
+            android:name="latitude"
+            app:argType="float" />
+        <argument
+            android:name="longitude"
+            app:argType="float" />
+    </fragment>
     <fragment
         android:id="@+id/nav_settings"
         android:name="com.example.weatherwise.ui.settings.SettingsFragment"
@@ -72,5 +82,14 @@
         android:name="com.example.weatherwise.ui.map.FavoriteMap"
         android:label="map"
         tools:layout="@layout/fragment_favorite_map" />
+    <fragment
+        android:id="@+id/alertMap"
+        android:name="com.example.weatherwise.ui.map.AlertMap"
+        android:label="fragment_alert_map"
+        tools:layout="@layout/fragment_alert_map" >
+        <action
+            android:id="@+id/action_alertMap_to_nav_alert"
+            app:destination="@id/nav_alert" />
+    </fragment>
 
 </navigation>
