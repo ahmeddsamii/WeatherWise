@@ -1,9 +1,5 @@
 package com.example.weatherwise.ui.alert.view
 
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,9 +11,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.WorkManager
-import com.example.weatherwise.AlarmReceiver
 import com.example.weatherwise.databinding.FragmentAlertBinding
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
 import com.example.weatherwise.model.AlertDto
+import com.example.weatherwise.network.api.RetrofitHelper
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import com.example.weatherwise.ui.alert.viewModel.AlertViewModel
 import com.example.weatherwise.ui.alert.viewModel.AlertViewModelFactory
 import com.example.weatherwise.uiState.UiState
@@ -51,7 +52,12 @@ class AlertFragment : Fragment(), OnDeleteAlert {
     }
 
     private fun initializeViewModel() {
-        val factory = AlertViewModelFactory(WeatherRepository.getInstance(requireContext()))
+        val factory = AlertViewModelFactory(
+            WeatherRepository.getInstance(
+                WeatherRemoteDataSource(RetrofitHelper),
+            PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()),
+            AlertLocalDataSource(AlertDatabaseBuilder.getInstance(requireContext()).alertDao()))
+        )
         alertViewModel = ViewModelProvider(this, factory)[AlertViewModel::class.java]
         alertViewModel.getAllLocalAlertsByDay()
     }
