@@ -7,13 +7,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherwise.uiState.UiState
 import com.example.weatherwise.model.ListElement
+import com.example.weatherwise.network.api.IWeatherRemoteDataSource
+import com.example.weatherwise.repositories.IWeatherRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val cRepo: WeatherRepository) : ViewModel() {
+class HomeViewModel(private val cRepo: IWeatherRepository) : ViewModel() {
 
     private val _hoursList = MutableStateFlow<UiState>(UiState.Loading)
     val hoursList = _hoursList.asStateFlow()
