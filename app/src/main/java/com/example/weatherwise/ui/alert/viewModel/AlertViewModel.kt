@@ -8,23 +8,36 @@ import androidx.lifecycle.viewModelScope
 import com.example.weatherwise.model.AlertDto
 import com.example.weatherwise.uiState.UiState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class AlertViewModel(val repository: WeatherRepository) : ViewModel() {
 
-    val _addedAlert = MutableStateFlow<UiState>(UiState.Loading)
+    private val _addedAlert = MutableStateFlow<UiState>(UiState.Loading)
     val addedAlert = _addedAlert.asStateFlow()
 
 
-    val _deletedAlert = MutableStateFlow<UiState>(UiState.Loading)
+    private val _deletedAlert = MutableStateFlow<UiState>(UiState.Loading)
     val deletedAlert = _deletedAlert.asStateFlow()
 
 
-    val _allLocalAlerts = MutableStateFlow<UiState>(UiState.Loading)
+    private val _allLocalAlerts = MutableStateFlow<UiState>(UiState.Loading)
     val allLocalAlerts = _allLocalAlerts.asStateFlow()
+
+    private val _latitudeSharedFlow = MutableSharedFlow<Double>()
+     val latitudeSharedFlow = _latitudeSharedFlow.asSharedFlow()
+
+    private val _longitudeSharedFlow = MutableSharedFlow<Double>()
+    val longitudeSharedFlow = _longitudeSharedFlow.asSharedFlow()
+
+    private val _currentWeather = MutableStateFlow<UiState>(UiState.Loading)
+    val currentWeather = _currentWeather.asStateFlow()
+
 
 
 
@@ -62,6 +75,16 @@ class AlertViewModel(val repository: WeatherRepository) : ViewModel() {
                 }.collect{
                     _allLocalAlerts.value = UiState.Success(it)
                 }
+        }
+    }
+
+    fun getCurrentWeather(latitude:Double,longitude:Double, apiKey:String, unit:String, lang:String){
+        viewModelScope.launch {
+            repository.getCurrentWeather(latitude,longitude,apiKey,unit,lang).catch {
+                _currentWeather.value = UiState.Failure(it.message!!)
+            }.collect {
+                _currentWeather.value = UiState.Success(it)
+            }
         }
     }
 
