@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -17,7 +16,13 @@ import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weatherwise.Constants
 import com.example.weatherwise.databinding.FragmentFavoriteBinding
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
 import com.example.weatherwise.model.FavoritePlace
+import com.example.weatherwise.network.api.RetrofitHelper
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModel
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModelFactory
 import com.example.weatherwise.uiState.UiState
@@ -45,7 +50,12 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        factory = FavoriteViewModelFactory(WeatherRepository.getInstance(requireContext()))
+        factory = FavoriteViewModelFactory(WeatherRepository.getInstance(
+            WeatherRemoteDataSource(RetrofitHelper),
+            PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()),
+            AlertLocalDataSource(AlertDatabaseBuilder.getInstance(requireContext()).alertDao())
+        )
+        )
         favoriteViewModel = ViewModelProvider(this, factory).get(FavoriteViewModel::class.java)
 
         setupRecyclerView()
