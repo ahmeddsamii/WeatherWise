@@ -120,7 +120,9 @@ class AlertMap : Fragment(), OnMapReadyCallback {
         intent.putExtra("lat", latitude)
         intent.putExtra("long", longitude)
         pendingIntent = PendingIntent.getBroadcast(
-            requireContext(), selectedDateTime.timeInMillis.toInt(), intent,
+            requireContext(),
+            selectedDateTime.timeInMillis.toInt(),
+            intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -131,7 +133,9 @@ class AlertMap : Fragment(), OnMapReadyCallback {
             pendingIntent
         )
 
-        alertViewModel.addAlert(AlertDto(start = selectedDateTime.timeInMillis))
+        alertViewModel.addAlert(AlertDto(
+            start = selectedDateTime.timeInMillis,
+        ))
 
         Snackbar.make(requireView(), "Alert set successfully", Snackbar.LENGTH_LONG).show()
     }

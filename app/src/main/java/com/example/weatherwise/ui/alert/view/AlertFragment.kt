@@ -121,19 +121,18 @@ class AlertFragment : Fragment(), OnDeleteAlert {
         val intent = Intent(requireContext(), AlarmReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(
             requireContext(),
-            0,
+            alertDto.start.toInt(), // Use the same request code as when setting the alarm
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         alarmManager.cancel(pendingIntent)
         pendingIntent.cancel()
     }
 
-
     private fun showConfirmationDialog(alertDto: AlertDto) {
         AlertDialog.Builder(requireContext())
             .setTitle("Confirm Deletion")
-            .setMessage("Are you sure you want to remove this alert, the alert will not send notification?")
+            .setMessage("Are you sure you want to remove this alert? The alert will not send a notification.")
             .setPositiveButton("Yes") { _, _ ->
                 alertViewModel.deleteAlert(alertDto)
                 cancelAlarm(alertDto)
