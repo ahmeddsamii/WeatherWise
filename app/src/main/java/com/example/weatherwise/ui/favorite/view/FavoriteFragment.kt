@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weatherwise.Constants
+import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentFavoriteBinding
 import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
 import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
@@ -26,10 +27,11 @@ import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModel
 import com.example.weatherwise.ui.favorite.viewModel.FavoriteViewModelFactory
 import com.example.weatherwise.uiState.UiState
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked {
+class FavoriteFragment : Fragment(), OnFavoriteDeleteListener, OnCardViewClicked {
 
     private lateinit var binding: FragmentFavoriteBinding
     private lateinit var factory: FavoriteViewModelFactory
@@ -50,6 +52,13 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupViewModel()
+        setupRecyclerView()
+        observeFavoritePlaces()
+        setupFabClickListener(view)
+    }
+
+    private fun setupViewModel() {
         factory = FavoriteViewModelFactory(WeatherRepository.getInstance(
             WeatherRemoteDataSource(RetrofitHelper),
             PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()),
@@ -57,10 +66,6 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
         )
         )
         favoriteViewModel = ViewModelProvider(this, factory).get(FavoriteViewModel::class.java)
-
-        setupRecyclerView()
-        observeFavoritePlaces()
-        setupFabClickListener(view)
     }
 
     private fun setupRecyclerView() {
@@ -72,18 +77,17 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
     }
 
     private fun observeFavoritePlaces() {
-//        favoriteViewModel.allLocalFavoritePlaces.observe(viewLifecycleOwner) { places ->
-//            adapter.submitList(places)
-//        }
-
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.CREATED){
                 favoriteViewModel.allLocalFavoritePlaces.collect{state->
                     when(state){
-                        is UiState.Loading -> ""
-                        is UiState.Failure -> ""
+                        is UiState.Loading -> Snackbar.make(requireView(),getString(R.string.fetching_favorite_places_please_wait), 2000).show()
+                        is UiState.Failure -> Snackbar.make(requireView(),getString(R.string.Something_went_wrong), 1000).show()
                         is UiState.Success<*> -> {
                             val list = state.data as List<FavoritePlace>
+                            if (list.isEmpty()){
+                                Snackbar.make(requireView(),getString(R.string.there_are_no_favorite_places), 1000).show()
+                            }
                             adapter.submitList(list)
                         }
                     }
@@ -94,7 +98,8 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
 
     private fun setupFabClickListener(view: View) {
         binding.fabAdd.setOnClickListener {
-            val action = FavoriteFragmentDirections.actionNavFavoriteToFavoriteMap2()
+            val action =
+                com.example.weatherwise.ui.favorite.view.FavoriteFragmentDirections.actionNavFavoriteToFavoriteMap2()
             Navigation.findNavController(view).navigate(action)
         }
     }
@@ -107,16 +112,20 @@ class FavoriteFragment : Fragment(),OnFavoriteDeleteListener, OnCardViewClicked 
     }
 
     override fun onClick(favoritePlace: FavoritePlace) {
-        showConfirmationDialog(favoritePlace)
+        showDeleteConfirmationDialog(favoritePlace)
     }
 
     override fun onCardClick(favoritePlace: FavoritePlace) {
         comingFromFavoriteSharedPreferences.edit().putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY,"true").apply()
-        val action = FavoriteFragmentDirections.actionNavFavoriteToNavHome(favoritePlace.latitude.toFloat(), favoritePlace.longitude.toFloat())
+        val action =
+            com.example.weatherwise.ui.favorite.view.FavoriteFragmentDirections.actionNavFavoriteToNavHome(
+                favoritePlace.latitude.toFloat(),
+                favoritePlace.longitude.toFloat()
+            )
         Navigation.findNavController(requireView()).navigate(action)
     }
 
-    private fun showConfirmationDialog(favoritePlace: FavoritePlace) {
+    private fun showDeleteConfirmationDialog(favoritePlace: FavoritePlace) {
         AlertDialog.Builder(requireContext())
             .setTitle("Confirm Deletion")
             .setMessage("Are you sure you want to remove this favorite place?")
