@@ -1,23 +1,39 @@
 package com.example.weatherwise
 
-import WeatherResponse
+import WeatherRepository
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
+import android.location.Geocoder
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.Build
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
+import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
+import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
+import com.example.weatherwise.network.api.RetrofitHelper
+import com.example.weatherwise.network.api.WeatherRemoteDataSource
+import com.example.weatherwise.ui.alert.view.AlertFragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 class AlarmReceiver : BroadcastReceiver() {
-    private lateinit var notificationSharedPreferences: SharedPreferences
-    private lateinit var notificationTempSharedPreferences: SharedPreferences
+
+    var temp: Int = 0
+    var latitude: Double? = null
+    var longitude: Double? = null
 
     companion object {
         const val CHANNEL_ID = "WeatherAlertChannel"
@@ -27,12 +43,30 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        notificationSharedPreferences =
-            context.getSharedPreferences(Constants.NOTIFICATION_SHARED_PREFS, Context.MODE_PRIVATE)
-        notificationTempSharedPreferences = context.getSharedPreferences(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS,Context.MODE_PRIVATE)
+        latitude = intent.extras?.getFloat("lat")?.toDouble()
+        longitude = intent.extras?.getFloat("long")?.toDouble()
         when (intent.action) {
             ACTION_DISMISS -> dismissAlert(context)
-            else -> showNotification(context)
+            else -> CoroutineScope(Dispatchers.IO).launch {
+                val response = WeatherRepository.getInstance(
+                    WeatherRemoteDataSource(RetrofitHelper), PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(context).placesDao()),
+                    AlertLocalDataSource(AlertDatabaseBuilder.getInstance(context).alertDao())
+                ).getCurrentWeather(latitude!!, longitude!!, Constants.API_KEY, "metric", "en")
+                response.
+                    catch {
+                        Toast.makeText(
+                            context.applicationContext,
+                            "Failed to get temperature",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }.
+                collect {
+                    withContext(Dispatchers.Main) {
+                        temp = it.main?.temp?.toInt()!!
+                        showNotification(context)
+                    }
+                }
+            }
         }
     }
 
@@ -51,12 +85,17 @@ class AlarmReceiver : BroadcastReceiver() {
             dismissIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val temp = notificationTempSharedPreferences.getString(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS_KEY,"null")
+
+        val openFragmentIntent = Intent(context,AlertFragment::class.java)
+        val openFragmentPendingIntent = PendingIntent.getActivity(context,0,openFragmentIntent,
+            PendingIntent.FLAG_IMMUTABLE)
+
+        val address = getAddress(context,latitude!!,longitude!!)
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.mist)
             .setContentTitle("Weather Alert")
-            .setContentText("The temperature is $temp in your area")
+            .setContentText("The temp is $temp in $address")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
@@ -67,19 +106,18 @@ class AlarmReceiver : BroadcastReceiver() {
             )
             .setAutoCancel(true)
             .setSound(null)  // Disable notification sound
+            .setContentIntent(openFragmentPendingIntent)
 
         val notificationManager =
             ContextCompat.getSystemService(context, NotificationManager::class.java)
         notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
 
+        val notificationOrAlarm =
+            context.getSharedPreferences(Constants.NOTIFICATION_SHARED_PREFS, Context.MODE_PRIVATE)
+                .getString(Constants.NOTIFICATION_SHARED_PREFS_KEY, "alarm")
 
-        val notificationOrAlarm = notificationSharedPreferences.getString(
-            Constants.NOTIFICATION_SHARED_PREFS_KEY,
-            "alarm"
-        )
-
+        // Play the sound manually
         if (notificationOrAlarm == "alarm") {
-            // Play the sound manually
             playSound(context, soundUri)
         }
 
@@ -121,5 +159,11 @@ class AlarmReceiver : BroadcastReceiver() {
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
+    }
+
+    private fun getAddress(context: Context, latitude:Double, longitude:Double):String{
+        val geocoder = Geocoder(context)
+        val address = geocoder.getFromLocation(latitude,longitude,1)?.get(0)?.getAddressLine(0)
+        return address?: "Unknown country"
     }
 }
