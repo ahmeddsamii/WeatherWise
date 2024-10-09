@@ -9,7 +9,7 @@ import com.example.weatherwise.databinding.FavPlaceItemBinding
 import com.example.weatherwise.diffUtils.FavoritePlaceDiffUtil
 import com.example.weatherwise.model.FavoritePlace
 
-class FavoriteAdapter(val deleteListener: OnFavoriteDeleteListener , val cardViewListener:OnCardViewClicked):ListAdapter<FavoritePlace,FavoriteAdapter.FavoriteItemViewHolder>(FavoritePlaceDiffUtil()) {
+class FavoriteAdapter(val deleteListener: OnFavoriteDeleteListener, val cardViewListener:OnCardViewClicked):ListAdapter<FavoritePlace,FavoriteAdapter.FavoriteItemViewHolder>(FavoritePlaceDiffUtil()) {
     lateinit var binding:FavPlaceItemBinding
 
     class FavoriteItemViewHolder(val binding:FavPlaceItemBinding):ViewHolder(binding.root)
