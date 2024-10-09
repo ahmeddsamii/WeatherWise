@@ -1,5 +1,12 @@
 package com.example.weatherwise.ui.alert.view
 
+import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,26 +17,28 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.work.WorkManager
+import com.example.weatherwise.AlarmReceiver
 import com.example.weatherwise.databinding.FragmentAlertBinding
 import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
 import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
 import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
 import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
 import com.example.weatherwise.model.AlertDto
+import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.network.api.RetrofitHelper
 import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import com.example.weatherwise.ui.alert.viewModel.AlertViewModel
 import com.example.weatherwise.ui.alert.viewModel.AlertViewModelFactory
 import com.example.weatherwise.uiState.UiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class AlertFragment : Fragment(), OnDeleteAlert {
 
     private lateinit var binding: FragmentAlertBinding
+    private lateinit var alarmManager: AlarmManager
     private lateinit var alertViewModel: AlertViewModel
-
+    lateinit var factory: AlertViewModelFactory
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,53 +48,49 @@ class AlertFragment : Fragment(), OnDeleteAlert {
         return binding.root
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initializeViewModel()
+        factory = AlertViewModelFactory(
+            WeatherRepository.getInstance(
+                WeatherRemoteDataSource(RetrofitHelper),
+                PlacesLocalDataSource(
+                    PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()
+                ),
+                AlertLocalDataSource(AlertDatabaseBuilder.getInstance(requireContext()).alertDao())
+            )
+        )
+        alertViewModel = ViewModelProvider(this, factory).get(AlertViewModel::class.java)
+        createNotificationChannel()
+        alertViewModel.getAllLocalAlertsByDay()
+        binding.addAlert.setOnClickListener {
+            Navigation.findNavController(view)
+                .navigate(AlertFragmentDirections.actionNavAlertToAlertMap())
+            // showDatePickerDialog()
+        }
     }
 
     override fun onStart() {
         super.onStart()
-
-        setupRecyclerView()
-        setupAddAlertButton()
-    }
-
-    private fun initializeViewModel() {
-        val factory = AlertViewModelFactory(
-            WeatherRepository.getInstance(
-                WeatherRemoteDataSource(RetrofitHelper),
-            PlacesLocalDataSource(PlacesLocalDatabaseBuilder.getInstance(requireContext()).placesDao()),
-            AlertLocalDataSource(AlertDatabaseBuilder.getInstance(requireContext()).alertDao()))
-        )
-        alertViewModel = ViewModelProvider(this, factory)[AlertViewModel::class.java]
-        alertViewModel.getAllLocalAlertsByDay()
-    }
-
-    private fun setupRecyclerView() {
         val adapter = AlertAdapter(this)
         binding.alertRecyclerView.apply {
             this.adapter = adapter
             layoutManager = LinearLayoutManager(requireContext())
         }
 
-        lifecycleScope.launch {
-            alertViewModel.allLocalAlerts.collect { state ->
-                when (state) {
-                    is UiState.Loading -> {
-                        // Show loading indicator if needed
-                    }
-                    is UiState.Failure -> {
-                        // Show error message
-                    }
+        lifecycleScope.launch(Dispatchers.Main) {
+            alertViewModel.allLocalAlerts.collect {
+                when (it) {
+                    is UiState.Loading -> "Loading"
+                    is UiState.Failure -> "Error while fetching alerts"
                     is UiState.Success<*> -> {
-                        val dataList = state.data as List<AlertDto>
+                        val dataList = it.data as List<AlertDto>
                         val newList = dataList.filter { alertDto ->
                             if (alertDto.start <= System.currentTimeMillis()) {
-                                alertViewModel.deleteAlert(alertDto)
-                                false
+                                alertViewModel.deleteAlert(alertDto) // Deleting alert
+                                false // Exclude this alert from the new list
                             } else {
-                                true
+                                true // Include this alert in the new list
                             }
                         }
                         adapter.submitList(newList)
@@ -95,10 +100,17 @@ class AlertFragment : Fragment(), OnDeleteAlert {
         }
     }
 
-    private fun setupAddAlertButton() {
-        binding.addAlert.setOnClickListener {
-            val action = AlertFragmentDirections.actionNavAlertToAlertMap()
-            Navigation.findNavController(it).navigate(action)
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationChannel = NotificationChannel(
+                "alertChannel",
+                "alerts",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val notificationManager =
+                requireContext().getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(notificationChannel)
         }
     }
 
@@ -106,10 +118,24 @@ class AlertFragment : Fragment(), OnDeleteAlert {
         showConfirmationDialog(alertDto)
     }
 
+    private fun cancelAlarm(alertDto: AlertDto) {
+        alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(requireContext(), AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            requireContext(),
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
+    }
+
+
     private fun showConfirmationDialog(alertDto: AlertDto) {
         AlertDialog.Builder(requireContext())
             .setTitle("Confirm Deletion")
-            .setMessage("Are you sure you want to remove this alert?")
+            .setMessage("Are you sure you want to remove this Alert?")
             .setPositiveButton("Yes") { _, _ ->
                 alertViewModel.deleteAlert(alertDto)
                 cancelAlarm(alertDto)
@@ -118,15 +144,4 @@ class AlertFragment : Fragment(), OnDeleteAlert {
             .show()
     }
 
-    private fun cancelAlarm(alertDto: AlertDto) {
-        WorkManager.getInstance(requireContext()).cancelWorkById(UUID.fromString(alertDto.id))
-    }
-}
-
-// Constants.kt (update or add these constants)
-
-object Constants {
-    const val API_KEY = "your_api_key_here"
-    const val NOTIFICATION_CHANNEL_ID = "WeatherAlertChannel"
-    const val NOTIFICATION_ID = 200
 }
