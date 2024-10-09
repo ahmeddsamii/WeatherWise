@@ -17,14 +17,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.weatherwise.AlarmReceiver
+import com.example.weatherwise.ui.alert.receiver.AlarmReceiver
+import com.example.weatherwise.R
 import com.example.weatherwise.databinding.FragmentAlertBinding
 import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
 import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
 import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
 import com.example.weatherwise.db.favoritePlaces.PlacesLocalDatabaseBuilder
 import com.example.weatherwise.model.AlertDto
-import com.example.weatherwise.model.FavoritePlace
 import com.example.weatherwise.network.api.RetrofitHelper
 import com.example.weatherwise.network.api.WeatherRemoteDataSource
 import com.example.weatherwise.ui.alert.viewModel.AlertViewModel
@@ -66,7 +66,6 @@ class AlertFragment : Fragment(), OnDeleteAlert {
         binding.addAlert.setOnClickListener {
             Navigation.findNavController(view)
                 .navigate(AlertFragmentDirections.actionNavAlertToAlertMap())
-            // showDatePickerDialog()
         }
     }
 
@@ -81,8 +80,8 @@ class AlertFragment : Fragment(), OnDeleteAlert {
         lifecycleScope.launch(Dispatchers.Main) {
             alertViewModel.allLocalAlerts.collect {
                 when (it) {
-                    is UiState.Loading -> "Loading"
-                    is UiState.Failure -> "Error while fetching alerts"
+                    is UiState.Loading -> getString(R.string.Loading)
+                    is UiState.Failure -> getString(R.string.AlertFragment_Error_while_fetching_alerts)
                     is UiState.Success<*> -> {
                         val dataList = it.data as List<AlertDto>
                         val newList = dataList.filter { alertDto ->
@@ -99,7 +98,6 @@ class AlertFragment : Fragment(), OnDeleteAlert {
             }
         }
     }
-
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -135,7 +133,7 @@ class AlertFragment : Fragment(), OnDeleteAlert {
     private fun showConfirmationDialog(alertDto: AlertDto) {
         AlertDialog.Builder(requireContext())
             .setTitle("Confirm Deletion")
-            .setMessage("Are you sure you want to remove this Alert?")
+            .setMessage("Are you sure you want to remove this alert, the alert will not send notification?")
             .setPositiveButton("Yes") { _, _ ->
                 alertViewModel.deleteAlert(alertDto)
                 cancelAlarm(alertDto)
