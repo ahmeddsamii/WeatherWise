@@ -53,4 +53,17 @@
     <string name="intial_gps_text">الموقع الحالي</string>
     <string name="intial_location_text">الموقع</string>
     <string name="initial_setup_title_text">الاعدادت الاوليه</string>
+
+    <string name="Loading">"تحميل"</string>
+    <string name="AlertFragment_Error_while_fetching_alerts">"خطأ اثناء تحميل المعلومات"</string>
+
+    <string name="fetching_favorite_places_please_wait">"من فضلك انتظر"</string>
+    <string name="Something_went_wrong">"حدث خطأ"</string>
+    <string name="there_are_no_favorite_places">"لا يوجد اماكن مفضله"</string>
+    <string name="Error_while_fetching_the_data">"حدث خطأ اثناء عرض المعلومات"</string>
+    <string name="No_internet_connection">لا يوجد اتصال بالأنترنت</string>
+    <string name="no_cached_file_for_hours_list">لا يوجد معلومات مخزنه عن الساعات</string>
+    <string name="no_cached_file_for_day_list">"لا يوجد معلومات مخزنه عن الايام</string>
+    <string name="no_cached_file_current_weather">لا يوجد معلومات مخزنه عن الطقس الحالي</string>
+
 </resources>

@@ -46,5 +46,15 @@
     <string name="intial_gps_text">GPS</string>
     <string name="intial_location_text">Location</string>
     <string name="initial_setup_title_text">Initial Setup</string>
+    <string name="Loading">"Loading"</string>
+    <string name="AlertFragment_Error_while_fetching_alerts">"Error while fetching alerts"</string>
+    <string name="fetching_favorite_places_please_wait">"Fetching favorite places, please wait"</string>
+    <string name="Something_went_wrong">"Something went wrong"</string>
+    <string name="there_are_no_favorite_places">"there are no favorite places"</string>
+    <string name="Error_while_fetching_the_data">"Error while fetching the data"</string>
+    <string name="No_internet_connection">No internet connection</string>
+    <string name="no_cached_file_for_hours_list">"No cached file for hours list</string>
+    <string name="no_cached_file_for_day_list">"No cached file for day list</string>
+    <string name="no_cached_file_current_weather">No cashed file for current weather</string>
 
 </resources>
