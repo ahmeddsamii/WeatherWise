@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
             when (destination.id) {
                 R.id.mapFragment -> hideToolbar()
                 R.id.map_favorite -> hideToolbar()
+                R.id.alertMap -> hideToolbar()
                 else -> showToolbar()
             }
         }
