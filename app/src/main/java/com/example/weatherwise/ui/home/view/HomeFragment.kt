@@ -172,8 +172,12 @@ class HomeFragment : Fragment() {
 
         when {
             isComingFromFavorite -> {
-                val latitude = HomeFragmentArgs.fromBundle(requireArguments()).latitude
-                val longitude = HomeFragmentArgs.fromBundle(requireArguments()).longitude
+                val latitude = HomeFragmentArgs.fromBundle(
+                    requireArguments()
+                ).latitude
+                val longitude = HomeFragmentArgs.fromBundle(
+                    requireArguments()
+                ).longitude
                 updateLocationAndFetchWeather(latitude.toDouble(), longitude.toDouble())
                 //reset the sharedPrefs to prevent crash
                 comingFromFavoriteSharedPreferences.edit()
@@ -268,8 +272,8 @@ class HomeFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 homeViewModel.hoursList.collect { responseState ->
                     when (responseState) {
-                        is UiState.Loading -> ""
-                        is UiState.Failure -> ""
+                        is UiState.Loading -> Snackbar.make(requireView(),getString(R.string.Loading), 500).show()
+                        is UiState.Failure -> Snackbar.make(requireView(),getString(R.string.Error_while_fetching_the_data), 500).show()
                         is UiState.Success<*> -> {
                             val hoursList = responseState.data as List<ListElement>
                             writeHoursListToCache(hoursList)
@@ -299,56 +303,30 @@ class HomeFragment : Fragment() {
                     when (response) {
                         is UiState.Failure -> {
                             if (NetworkUtil.isInternetAvailable(requireContext())) {
-                                binding.cardView.visibility = View.GONE
-                                binding.daysRecyclerView.visibility = View.GONE
-                                binding.hoursRecyclerView.visibility = View.GONE
-                                binding.lastItemCardView.visibility = View.GONE
-                                binding.progressbar.visibility = View.GONE
-                                binding.tvDate.visibility = View.GONE
-                                binding.tvCountryName.visibility = View.GONE
-//                                binding.disablePermissionCardView.visibility = View.GONE
+                                showUiCurrentWeatherFailureState()
+                                Snackbar.make(requireView(), getString(R.string.Something_went_wrong),2000).show()
+                            }
+                            else{
+                                Snackbar.make(requireView(), getString(R.string.No_internet_connection),2000).show()
                             }
                         }
 
                         is UiState.Success<*> -> {
-                            binding.cardView.visibility = View.VISIBLE
-                            binding.daysRecyclerView.visibility = View.VISIBLE
-                            binding.hoursRecyclerView.visibility = View.VISIBLE
-                            binding.lastItemCardView.visibility = View.VISIBLE
-                            binding.progressbar.visibility = View.GONE
-                            binding.tvDate.visibility = View.VISIBLE
-                            binding.tvCountryName.visibility = View.VISIBLE
-//                            binding.disablePermissionCardView.visibility = View.GONE
-//                            binding.disablePermissionCardView.visibility = View.GONE
-                            binding.disablePermissionConstraint.visibility = View.GONE
-                            binding.textView2.visibility = View.GONE
-                            binding.textView3.visibility = View.GONE
-                            binding.btnAllow.visibility = View.GONE
+                            showUiCurrentWeatherSuccessState()
                             val it = response.data as WeatherResponse
                             updateCurrentWeatherUi(it)
                             writeCurrentWeatherToCache(it)
                             notificationTempSharedPreferences.edit().putString(Constants.NOTIFICATION_ADDRESS_SHARED_PREFS_KEY, "${it.main?.temp?.toInt()!!} ${tempUnit.symbol}").apply()
-                            withContext(Dispatchers.Main){
-                                binding.cardView.visibility = View.VISIBLE
-                                binding.daysRecyclerView.visibility = View.VISIBLE
-                                binding.hoursRecyclerView.visibility = View.VISIBLE
-                                binding.lastItemCardView.visibility = View.VISIBLE
-                            }
-
+                            Log.i("dataaaaaaaaa", "onViewCreated: $it")
                         }
 
                         is UiState.Loading -> {
-                            binding.progressbar.visibility = View.VISIBLE
-                            binding.tvDate.visibility = View.GONE
-                            binding.tvCountryName.visibility = View.GONE
-//                            binding.disablePermissionCardView.visibility = View.GONE
+                            showUiCurrentWeatherLoadingState()
                         }
                     }
                 }
             }
         }
-
-
 
 
 
@@ -380,8 +358,46 @@ class HomeFragment : Fragment() {
 
             }
         }
+    }
 
+    private fun showUiCurrentWeatherLoadingState() {
+        binding.progressbar.visibility = View.VISIBLE
+        binding.tvDate.visibility = View.GONE
+        binding.tvCountryName.visibility = View.GONE
+        binding.cardView.visibility = View.GONE
+        binding.daysRecyclerView.visibility = View.GONE
+        binding.hoursRecyclerView.visibility = View.GONE
+        binding.lastItemCardView.visibility = View.GONE
+        binding.tvDate.visibility = View.GONE
+        binding.tvCountryName.visibility = View.GONE
+        binding.disablePermissionConstraint.visibility = View.GONE
+        binding.textView2.visibility = View.GONE
+        binding.textView3.visibility = View.GONE
+        binding.btnAllow.visibility = View.GONE
+    }
 
+    private fun showUiCurrentWeatherFailureState() {
+        binding.cardView.visibility = View.GONE
+        binding.daysRecyclerView.visibility = View.GONE
+        binding.hoursRecyclerView.visibility = View.GONE
+        binding.lastItemCardView.visibility = View.GONE
+        binding.progressbar.visibility = View.GONE
+        binding.tvDate.visibility = View.GONE
+        binding.tvCountryName.visibility = View.GONE
+    }
+
+    private fun showUiCurrentWeatherSuccessState() {
+        binding.cardView.visibility = View.VISIBLE
+        binding.daysRecyclerView.visibility = View.VISIBLE
+        binding.hoursRecyclerView.visibility = View.VISIBLE
+        binding.lastItemCardView.visibility = View.VISIBLE
+        binding.progressbar.visibility = View.GONE
+        binding.tvDate.visibility = View.VISIBLE
+        binding.tvCountryName.visibility = View.VISIBLE
+        binding.disablePermissionConstraint.visibility = View.GONE
+        binding.textView2.visibility = View.GONE
+        binding.textView3.visibility = View.GONE
+        binding.btnAllow.visibility = View.GONE
     }
 
     private fun writeCurrentWeatherToCache(weatherResponse: WeatherResponse){
@@ -416,16 +432,17 @@ class HomeFragment : Fragment() {
                 val resultString = fis.readBytes().decodeToString()
                 val hoursList: List<ListElement> = Gson().fromJson<List<ListElement>?>(resultString, object : TypeToken<List<ListElement>>() {}.type).map {
                         element ->
-                    // Make your changes to each ListElement here
                     element.copy(
                         dtTxt = element.dtTxt.substring(10, element.dtTxt.lastIndex)
                     )
                 }
+                Log.i("TAG", "readHoursListCache: $hoursList")
                 withContext(Dispatchers.Main){
+                    binding.hoursRecyclerView.visibility = View.VISIBLE
                     showHoursListOnUi(hoursList)
                 }
             }else{
-                Snackbar.make(requireView(),"no cached file for hours list",2000).show()
+                Snackbar.make(requireView(),getString(R.string.no_cached_file_for_hours_list),2000).show()
             }
         }
     }
@@ -453,10 +470,11 @@ class HomeFragment : Fragment() {
                 val resultString = fis.readBytes().decodeToString()
                 val dayList: List<DailyWeather> = Gson().fromJson<List<DailyWeather>?>(resultString, object : TypeToken<List<DailyWeather>>() {}.type)
                 withContext(Dispatchers.Main){
+                    binding.daysRecyclerView.visibility = View.VISIBLE
                     showDaysListOnUi(dayList)
                 }
             }else{
-                Snackbar.make(requireView(),"no cached file for hours list",2000).show()
+                Snackbar.make(requireView(),getString(R.string.no_cached_file_for_day_list),2000).show()
             }
         }
     }
@@ -483,15 +501,16 @@ class HomeFragment : Fragment() {
 
     private fun readCurrentWeatherCache(){
         binding.progressbar.visibility = View.GONE
-        Snackbar.make(requireView(),"no internet, trying to load cached weather",2000).show()
         val file = File(requireContext().cacheDir,"currentWeather")
         if (file.exists()){
             val fis = FileInputStream(file)
             val resultString = fis.readBytes().decodeToString()
             val currentWeatherObj = Gson().fromJson(resultString,WeatherResponse::class.java)
+            binding.cardView.visibility = View.VISIBLE
+            binding.lastItemCardView.visibility = View.VISIBLE
             updateCurrentWeatherUi(currentWeatherObj)
         }else{
-            Snackbar.make(requireView(),"no cached file",2000).show()
+            Snackbar.make(requireView(),getString(R.string.no_cached_file_current_weather),2000).show()
         }
 
     }
@@ -525,10 +544,6 @@ class HomeFragment : Fragment() {
                 super.onLocationResult(p0)
                 val latitude = p0.lastLocation?.latitude!!
                 val longitude = p0.lastLocation?.longitude!!
-//                offlineLocationSharedPreferences.edit()
-//                    .putFloat(Constants.OFFLINE_LATITUDE, latitude.toFloat()).apply()
-//                offlineLocationSharedPreferences.edit()
-//                    .putFloat(Constants.OFFLINE_LONGITUDE, longitude.toFloat()).apply()
 
 
                 val locale = Locale(language ?: "en")
@@ -538,7 +553,7 @@ class HomeFragment : Fragment() {
                     p0.lastLocation?.longitude!!,
                     1
                 )
-                val address = "${x?.get(0)!!.countryName}, ${x?.get(0)!!.adminArea}"
+                val address = "${x?.get(0)!!.countryName}, ${x[0]!!.adminArea}"
                 binding.tvCountryName.text = address
 
 
@@ -588,6 +603,7 @@ class HomeFragment : Fragment() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -597,7 +613,6 @@ class HomeFragment : Fragment() {
         if (requestCode == Constants.LOCATION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (isLocationEnabled()) {
-                    binding.progressbar.visibility = View.VISIBLE
                     getLocation()
                 }else{
                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
@@ -618,7 +633,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun requestPermission() {
-        binding.progressbar.visibility = View.GONE
         binding.disablePermissionConstraint.visibility = View.GONE
         binding.disablePermissionCardView.visibility = View.GONE
         requestPermissions(
@@ -628,16 +642,6 @@ class HomeFragment : Fragment() {
 
     }
 
-
-//    fun onPermissionResult(isGranted: Boolean) {
-//        if (isGranted) {
-//            if (isLocationEnabled()) {
-//                getLocation()
-//            } else {
-//                showLocationSettingsDialog()
-//            }
-//        }
-//    }
 
     private fun applyGradientToCard() {
         val startColor = ContextCompat.getColor(requireContext(), R.color.DarkBlue)
@@ -701,7 +705,7 @@ class HomeFragment : Fragment() {
 
 
     private fun updateCurrentWeatherUi(weatherResponse: WeatherResponse) {
-       val windUnit = windSpeedSharedPreferences.getString(Constants.WIND_SPEED_SHARED_PREFS_KEY, "meter")
+        val windUnit = windSpeedSharedPreferences.getString(Constants.WIND_SPEED_SHARED_PREFS_KEY, "meter")
         val windSpeed = when(windUnit){
             "meter" -> "${weatherResponse.wind?.speed} m/s"
             else -> String.format("%.2f", (weatherResponse.wind?.speed)?.times(2.236936)) + " M/h"
