@@ -75,30 +75,29 @@ class HomeViewModelTest {
 
 
     @Test
-    fun getCurrentWeather_Succes ()= runBlocking {
+    fun getCurrentWeather_Success ()= runBlocking {
         // Given
-        val latitude = 0.0 // Use valid latitude
-        val longitude = 0.0 // Use valid longitude
-        val language = "en"
+        val latitude = 0.0
+        val longitude = 0.0
 
 
         // When
         val result = viewModel.getForecastDataByDay(latitude, longitude,Constants.API_KEY,"metric","en")
 
         // Then
-        assertThat(result, not(nullValue())) // Use the correct Hamcrest matcher
+        assertThat(result, not(nullValue()))
     }
     @Test
-    fun getForecast_Succes () = runBlocking {
+    fun getForecast_Success () = runBlocking {
 
-        val latitude = 0.0 // Use valid latitude
-        val longitude = 0.0 // Use valid longitude
-        val language = "en"
+        val latitude = 0.0
+        val longitude = 0.0
+
 
 
         val result = viewModel.getForecastDataByDay(latitude,longitude,Constants.API_KEY,"metric", "en")
 
-        assertThat(result, not(nullValue())) // Use the correct Hamcrest matcher
+        assertThat(result, not(nullValue()))
 
     }
 
