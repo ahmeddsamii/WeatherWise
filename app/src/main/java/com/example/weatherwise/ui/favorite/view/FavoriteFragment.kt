@@ -127,12 +127,12 @@ class FavoriteFragment : Fragment(), OnFavoriteDeleteListener, OnCardViewClicked
 
     private fun showDeleteConfirmationDialog(favoritePlace: FavoritePlace) {
         AlertDialog.Builder(requireContext())
-            .setTitle("Confirm Deletion")
-            .setMessage("Are you sure you want to remove this favorite place?")
-            .setPositiveButton("Yes") { _, _ ->
+            .setTitle(getString(R.string.Confirm_Deletion))
+            .setMessage(getString(R.string.Are_you_sure_you_want_to_remove_this_favorite_place))
+            .setPositiveButton(R.string.Yes) { _, _ ->
                 favoriteViewModel.removeFavoritePlace(favoritePlace)
             }
-            .setNegativeButton("No", null)
+            .setNegativeButton(R.string.No, null)
             .show()
     }
 }
