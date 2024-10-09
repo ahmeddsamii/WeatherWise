@@ -2,6 +2,7 @@ package com.example.weatherwise.ui.home.view
 
 import WeatherResponse
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -199,7 +200,6 @@ class HomeFragment : Fragment() {
                     .putString(Constants.COMING_FROM_FAVORITE_MAP_SHARED_PREFS_KEY, "false").apply()
                 mapsOrGpsSharedPreferences.edit().putString(Constants.MAP_OR_GPS_KEY,"not_map").apply()
                 if (NetworkUtil.isInternetAvailable(requireContext())) {
-                    Toast.makeText(requireContext(), "internet is available", Toast.LENGTH_SHORT).show()
                     if (NetworkUtil.isInternetAvailable(requireContext())){
                         if (checkSelfPermission()) {
                             if (isLocationEnabled()) {
@@ -704,6 +704,7 @@ class HomeFragment : Fragment() {
 
 
 
+    @SuppressLint("DefaultLocale", "SetTextI18n")
     private fun updateCurrentWeatherUi(weatherResponse: WeatherResponse) {
         val windUnit = windSpeedSharedPreferences.getString(Constants.WIND_SPEED_SHARED_PREFS_KEY, "meter")
         val windSpeed = when(windUnit){
