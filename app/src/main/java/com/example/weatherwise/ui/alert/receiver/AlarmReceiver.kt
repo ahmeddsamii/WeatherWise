@@ -1,4 +1,4 @@
-package com.example.weatherwise
+package com.example.weatherwise.ui.alert.receiver
 
 import WeatherRepository
 import android.app.NotificationChannel
@@ -16,6 +16,9 @@ import android.os.Build
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.example.weatherwise.Constants
+import com.example.weatherwise.MainActivity
+import com.example.weatherwise.R
 import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
 import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
 import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
@@ -39,6 +42,7 @@ class AlarmReceiver : BroadcastReceiver() {
         const val CHANNEL_ID = "WeatherAlertChannel"
         const val NOTIFICATION_ID = 200
         const val ACTION_DISMISS = "com.example.weatherwise.DISMISS_ALERT"
+        const val ACTION_STOP_SOUND = "com.example.weatherwise.STOP_SOUND"
         private var ringtone: Ringtone? = null
     }
 
@@ -46,6 +50,7 @@ class AlarmReceiver : BroadcastReceiver() {
         latitude = intent.extras?.getFloat("lat")?.toDouble()
         longitude = intent.extras?.getFloat("long")?.toDouble()
         when (intent.action) {
+            ACTION_STOP_SOUND -> ringtone?.stop()
             ACTION_DISMISS -> dismissAlert(context)
             else -> CoroutineScope(Dispatchers.IO).launch {
                 val response = WeatherRepository.getInstance(
@@ -86,16 +91,23 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val openFragmentIntent = Intent(context,AlertFragment::class.java)
-        val openFragmentPendingIntent = PendingIntent.getActivity(context,0,openFragmentIntent,
-            PendingIntent.FLAG_IMMUTABLE)
+        // Create an Intent to open AlertFragment
+        val openAlertFragmentIntent = Intent(context.applicationContext, MainActivity::class.java).apply {
+            action = ACTION_STOP_SOUND
+        }
+        val openAlertFragmentPendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            openAlertFragmentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
-        val address = getAddress(context,latitude!!,longitude!!)
+        val address = getAddress(context, latitude!!, longitude!!)
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.mist)
+            .setSmallIcon(R.drawable.notifications)
             .setContentTitle("Weather Alert")
-            .setContentText("The temp is $temp in $address")
+            .setContentText("The temperature is $temp°C in $address")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
@@ -104,9 +116,9 @@ class AlarmReceiver : BroadcastReceiver() {
                 "Dismiss",
                 dismissPendingIntent
             )
-            .setAutoCancel(true)
+            .setAutoCancel(false)
             .setSound(null)  // Disable notification sound
-            .setContentIntent(openFragmentPendingIntent)
+            .setContentIntent(openAlertFragmentPendingIntent)
 
         val notificationManager =
             ContextCompat.getSystemService(context, NotificationManager::class.java)
@@ -120,7 +132,6 @@ class AlarmReceiver : BroadcastReceiver() {
         if (notificationOrAlarm == "alarm") {
             playSound(context, soundUri)
         }
-
     }
 
     private fun playSound(context: Context, soundUri: android.net.Uri) {

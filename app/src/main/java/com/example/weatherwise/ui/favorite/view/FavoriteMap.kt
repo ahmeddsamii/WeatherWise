@@ -1,4 +1,4 @@
-package com.example.weatherwise.ui.map
+package com.example.weatherwise.ui.favorite.view
 
 import android.location.Geocoder
 import android.os.Bundle
@@ -37,12 +37,6 @@ class FavoriteMap : Fragment(),OnMapReadyCallback {
     lateinit var favoriteViewModel: FavoriteViewModel
     lateinit var factory: FavoriteViewModelFactory
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

@@ -1,6 +1,5 @@
-package com.example.weatherwise.ui.map
+package com.example.weatherwise.ui.alert.view
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.DatePickerDialog
@@ -26,7 +25,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
 import java.util.*
-import com.example.weatherwise.AlarmReceiver
+import com.example.weatherwise.ui.alert.receiver.AlarmReceiver
 import com.example.weatherwise.db.alertPlaces.AlertDatabaseBuilder
 import com.example.weatherwise.db.alertPlaces.AlertLocalDataSource
 import com.example.weatherwise.db.favoritePlaces.PlacesLocalDataSource
@@ -121,7 +120,7 @@ class AlertMap : Fragment(), OnMapReadyCallback {
         intent.putExtra("lat", latitude)
         intent.putExtra("long", longitude)
         pendingIntent = PendingIntent.getBroadcast(
-            requireContext(), 0, intent,
+            requireContext(), selectedDateTime.timeInMillis.toInt(), intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
