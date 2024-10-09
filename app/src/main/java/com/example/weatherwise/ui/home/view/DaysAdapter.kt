@@ -50,7 +50,8 @@ class DaysAdapter: ListAdapter<DailyWeather, DaysAdapter.DayViewHolder>(DailyWea
             "imperial" -> ((currentDay.minTemp.toInt() - 273.15) * 1.8 + 32).toInt().toString()
             else -> currentDay.minTemp
         }
-        holder.binding.minTemp.text = "$minTemp ${tempUnit.symbol}"
+        holder.binding.minTemp.text = minTemp
+        holder.binding.tempUnit.text = tempUnit.symbol
 
         holder.binding.icon.setImageResource(getWeatherIcon(currentDay.imageIcon ?: ""))
     }
