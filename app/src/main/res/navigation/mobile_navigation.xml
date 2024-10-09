@@ -79,12 +79,12 @@
     </fragment>
     <fragment
         android:id="@+id/map_favorite"
-        android:name="com.example.weatherwise.ui.map.FavoriteMap"
+        android:name="com.example.weatherwise.ui.favorite.view.FavoriteMap"
         android:label="map"
         tools:layout="@layout/fragment_favorite_map" />
     <fragment
         android:id="@+id/alertMap"
-        android:name="com.example.weatherwise.ui.map.AlertMap"
+        android:name="com.example.weatherwise.ui.alert.view.AlertMap"
         android:label="fragment_alert_map"
         tools:layout="@layout/fragment_alert_map" >
         <action
