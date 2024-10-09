@@ -56,5 +56,9 @@
     <string name="no_cached_file_for_hours_list">"No cached file for hours list</string>
     <string name="no_cached_file_for_day_list">"No cached file for day list</string>
     <string name="no_cached_file_current_weather">No cashed file for current weather</string>
+    <string name="Confirm_Deletion">Confirmation</string>
+    <string name="Are_you_sure_you_want_to_remove_this_favorite_place">"Are you sure you want to remove this favorite place?"</string>
+    <string name="Yes">Yes</string>
+    <string name="No">"No"</string>
 
 </resources>

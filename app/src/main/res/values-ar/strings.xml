@@ -65,5 +65,10 @@
     <string name="no_cached_file_for_hours_list">لا يوجد معلومات مخزنه عن الساعات</string>
     <string name="no_cached_file_for_day_list">"لا يوجد معلومات مخزنه عن الايام</string>
     <string name="no_cached_file_current_weather">لا يوجد معلومات مخزنه عن الطقس الحالي</string>
+    <string name="Confirm_Deletion">تأكيد</string>
+    <string name="Are_you_sure_you_want_to_remove_this_favorite_place">"هل أنت متأكد من ازاله هذا المكان؟"</string>
+    <string name="Yes">نعم</string>
+    <string name="No">"لا"</string>
+
 
 </resources>
