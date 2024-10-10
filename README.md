@@ -39,4 +39,4 @@ Special thanks to Eng. Heba Ismail, Eng. Yassmeen hosny, and Eng. Mohamed Galal 
 
 ## Installation
 
-To use the Food Planner Android App, you can download the APK file from the [releases page](https://fastupload.io/19786651bc5829cd) and install it on your Android device.
+To use the Weather Android App, you can download the APK file from the [releases page](https://fastupload.io/19786651bc5829cd) and install it on your Android device.
